@@ -4,8 +4,8 @@ Phase 1–3 cite these projects as **design references**. SCS-Sim is a clean-roo
 implementation (MIT). We do **not** vendor-copy large GPL codebases.
 
 Phase 2 (+Grid, GSL, stretch) is inspired by **Hypatia**, **StarPerf**, **LEOCraft**,
-and **LEOPath**. Phase 3 eclipse/atmosphere is a minimal stub, not Orekit-grade;
-**orbital-compute** informs later power/thermal/radiation coupling.
+and **LEOPath**. Phase 3–4 power, thermal, SAA, and the greedy eclipse look-ahead
+scheduler are clean-room stubs inspired by **orbital-compute** — not a copy.
 
 | Project | Role vs SCS-Sim | License (upstream) | Link |
 |---------|-----------------|--------------------|------|

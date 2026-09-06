@@ -1,10 +1,10 @@
 """Cylindrical umbra / penumbra (Sun–Earth shadow).
 
 Phase: 3 (environment)
-Completion: 80%
+Completion: 90%
 
 Simple cylinder + solar-angular-radius penumbra annulus. Not a conical
-Orekit-grade model. Radiation / power coupling is still Phase 4.
+Orekit-grade model. Power and thermal consume ``sunlight_fraction``.
 """
 
 from __future__ import annotations
