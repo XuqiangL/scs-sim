@@ -15,6 +15,7 @@ from scs_sim.orbit.frames import (
     keplerian_to_eci_m,
 )
 from scs_sim.orbit.kepler import KeplerJ2Propagator, orbital_period_s
+from scs_sim.orbit.orekit_prop import OrekitPropagator
 from scs_sim.orbit.ports import PropagatorPort
 from scs_sim.orbit.propagator import make_propagator
 from scs_sim.orbit.sgp4_prop import Sgp4Propagator
@@ -22,6 +23,7 @@ from scs_sim.orbit.sgp4_prop import Sgp4Propagator
 __all__ = [
     "KeplerianBatch",
     "KeplerJ2Propagator",
+    "OrekitPropagator",
     "PropagatorPort",
     "Sgp4Propagator",
     "ecef_to_eci",

@@ -410,6 +410,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Run Phase 6 CZML / KPI / ground-track demo (default: phase6_viz.yaml)",
     )
+    parser.add_argument(
+        "--api",
+        action="store_true",
+        help="Run Phase 7 local ops REST API (default config: phase6_viz.yaml)",
+    )
     args = parser.parse_args(argv)
 
     if args.ops:
@@ -427,6 +432,16 @@ def main(argv: list[str] | None = None) -> int:
         cfg_path = args.config if args.config is not None else (here if here.is_file() else default_config_path())
         run_viz_demo(cfg_path, max_sats=args.max_sats, steps=args.steps)
         return 0
+
+    if args.api:
+        from scs_sim.api.__main__ import main as api_main
+
+        here = Path("configs") / "phase6_viz.yaml"
+        cfg_path = args.config if args.config is not None else (here if here.is_file() else default_config_path())
+        api_argv = ["--config", str(cfg_path)]
+        if args.max_sats is not None:
+            api_argv.extend(["--max-sats", str(args.max_sats)])
+        return api_main(api_argv)
 
     cfg_path = args.config if args.config is not None else default_config_path()
     run_demo(

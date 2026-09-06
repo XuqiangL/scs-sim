@@ -1,12 +1,13 @@
 """Propagator factory (port → adapter).
 
-Phase: 1 (core) + Phase 3 drag hook
-Completion: 92%
+Phase: 1 (core) + Phase 3 drag hook + Phase 7 Orekit stub
+Completion: 94%
 """
 
 from __future__ import annotations
 
 from scs_sim.orbit.kepler import KeplerJ2Propagator
+from scs_sim.orbit.orekit_prop import OrekitPropagator
 from scs_sim.orbit.ports import PropagatorPort
 from scs_sim.orbit.sgp4_prop import Sgp4Propagator
 
@@ -22,4 +23,6 @@ def make_propagator(
         return KeplerJ2Propagator(atmosphere=atmosphere, apply_drag=apply_drag)
     if key in {"sgp4", "python-sgp4"}:
         return Sgp4Propagator()
-    raise ValueError(f"unknown propagator {name!r}; expected kepler_j2 or sgp4")
+    if key in {"orekit", "orekit_stub"}:
+        return OrekitPropagator()
+    raise ValueError(f"unknown propagator {name!r}; expected kepler_j2, sgp4, or orekit")

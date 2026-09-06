@@ -233,9 +233,9 @@ class SimConfig:
         return sum(s.n_sats for s in self.shells)
 
     def validate(self) -> None:
-        if self.propagator not in {"kepler_j2", "sgp4"}:
+        if self.propagator not in {"kepler_j2", "sgp4", "orekit"}:
             raise ValueError(
-                f"unknown propagator {self.propagator!r}; expected kepler_j2 or sgp4"
+                f"unknown propagator {self.propagator!r}; expected kepler_j2, sgp4, or orekit"
             )
         if not self.shells:
             raise ValueError("at least one shell is required")

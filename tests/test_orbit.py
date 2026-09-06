@@ -56,3 +56,4 @@ def test_eci_ecef_roundtrip() -> None:
 def test_factory_names() -> None:
     assert make_propagator("kepler_j2").name == "kepler_j2"
     assert make_propagator("sgp4").name == "sgp4"
+    assert make_propagator("orekit").name == "orekit"

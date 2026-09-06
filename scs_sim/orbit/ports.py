@@ -4,6 +4,8 @@ Phase: 1 (core)
 Completion: 90%
 
 Later adapters (Orekit, jaxsgp4, poliastro) implement this protocol.
+``make_propagator("orekit")`` returns a pure-Python stub that raises
+``NotImplementedError`` on propagate — no JDK in CI.
 """
 
 from __future__ import annotations

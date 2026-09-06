@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scs-sim"
-version = "0.6.0"
-description = "Industrial-grade Starlink-like compute constellation simulator (Phase 6: viz + validation)"
+version = "0.7.0"
+description = "Industrial-grade Starlink-like compute constellation simulator (Phase 7: ops API + twin)"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -18,14 +18,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "fastapi>=0.110", "httpx>=0.27"]
 viz = ["matplotlib>=3.8"]
+api = ["fastapi>=0.110", "uvicorn>=0.27", "httpx>=0.27"]
 # Optional GPU-batch SGP4 later; not required for Phase 1 / Windows.
 jax = ["jax>=0.4"]
 
 [project.scripts]
+scs-sim = "scs_sim.cli:main"
 scs-demo = "scs_sim.demo:main"
 scs-viz = "scs_sim.demo_viz:main"
+scs-api = "scs_sim.api.__main__:main"
 
 [project.urls]
 Documentation = "docs/ARCHITECTURE.md"

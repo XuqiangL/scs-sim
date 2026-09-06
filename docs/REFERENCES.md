@@ -9,6 +9,8 @@ scheduler are clean-room stubs inspired by **orbital-compute** — not a copy.
 Phase 6 CZML / HTML is a **clean-room exporter** (no Hypatia satviz / StarPerf
 Cesium app code). Optional numeric comparisons are documented in
 `docs/VALIDATION.md` and do not vendor those repos.
+Phase 7 Orekit support is a **port stub only** (Apache-2.0 upstream at
+https://www.orekit.org/) — we do not vendor JARs or require a JDK.
 
 | Project | Role vs SCS-Sim | License (upstream) | Link |
 |---------|-----------------|--------------------|------|

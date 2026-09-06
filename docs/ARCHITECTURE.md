@@ -2,9 +2,9 @@
 
 **Product:** industrial-grade Starlink-like **compute** constellation simulator  
 **Horizon:** fly ~10 000 satellites for orbital insertion, deployment, and operations  
-**Out of scope still:** Windows MSI, Orekit adapter, production REST / K8s (Phase 7).
+**Out of scope still:** signed Windows MSI, live Orekit/Java, production auth / K8s.
 
-**Claimed product progress: 78%** (Phases 1–5 + Phase 6 CZML / offline viz / validation).
+**Claimed product progress: 91%** (Phases 1–7: viz + local ops API + twin + Orekit stub).
 
 ---
 
@@ -56,8 +56,11 @@ flowchart TB
         VAL["period / Walker T / radius"]
     end
 
-    subgraph P7["Phase 7 — LATER"]
-        MSI["Windows MSI / REST / Orekit"]
+    subgraph P7["Phase 7 — GREEN — packaging + API"]
+        API["FastAPI ops console"]
+        WIN["venv + scs-sim.cmd"]
+        TWIN["telemetry RMSE"]
+        ORK["Orekit port stub"]
     end
 
     CFG --> WAL --> ORB --> FRM
@@ -84,7 +87,11 @@ flowchart TB
     KPI --> HTML
     ORB --> VAL
     WAL --> VAL
-    HTML -.-> MSI
+    HTML --> API
+    KPI --> API
+    LIF --> TWIN
+    ORB --> ORK
+    API --> WIN
 ```
 
 Hexagonal-ish rule: ports stay in each package. Phase 4 scheduler reads power / eclipse / topology without owning them.
@@ -95,9 +102,9 @@ Hexagonal-ish rule: ports stay in each package. Phase 4 scheduler reads power / 
 
 | Module | Phase | Status | Completion | Notes |
 |--------|------:|--------|-----------:|-------|
-| `scs_sim/config.py` | 1–6 | **green** | 96% | + viz output paths |
+| `scs_sim/config.py` | 1–7 | **green** | 96% | + viz paths; orekit name |
 | `scs_sim/clock.py` | 1 | **green** | 90% | fixed-step UTC clock |
-| `scs_sim/orbit/` | 1+3 | **green** | 90% | Kepler+J2; SGP4; optional drag hook |
+| `scs_sim/orbit/` | 1+3+7 | **green** | 92% | Kepler+J2; SGP4; Orekit stub |
 | `scs_sim/constellation/` | 1 | **green** | 95% | Walker-delta; subsample modes |
 | `scs_sim/network/` | 2 | **green** | 90% | +Grid, GSL, snapshots, reachability |
 | `scs_sim/environment/` eclipse+atm | 3 | **green** | 90% | cylinder shadow + exponential ρ |
@@ -113,16 +120,20 @@ Hexagonal-ish rule: ports stay in each package. Phase 4 scheduler reads power / 
 | `scs_sim/validation/` | 6 | **green** | 90% | period / T / radius; optional baselines |
 | `scs_sim/demo_viz.py` | 6 | **green** | 90% | Phase 6 runner |
 | `configs/phase6_viz.yaml` | 6 | **green** | 100% | 6×6 = 36 sats |
-| Windows MSI / Orekit | 7 | **not started** | 0% | follow-up |
+| `scs_sim/api/` | 7 | **green** | 90% | FastAPI; CORS open; `/docs` |
+| `scs_sim/twin/` | 7 | **green** | 90% | telemetry CSV RMSE |
+| `scs_sim/orbit/orekit_prop.py` | 7 | **stub** | 30% | Protocol + NotImplemented |
+| Windows venv / cmd | 7 | **green** | 85% | `install_windows.ps1`, `scs-sim.cmd` |
+| Signed MSI | 7 | **out of scope** | 0% | documented, not required |
 
 ### Progress bar (product)
 
 ```
-███████████████████████████████░░░░░░░░░░░░░  78%
-Phase 1–5 done · Phase 6 viz + validation · no MSI / Orekit
+████████████████████████████████████░░░░░░░░  91%
+Phase 1–6 done · Phase 7 API / twin / stub · no signed MSI
 ```
 
-**Claimed product progress: 78%.**
+**Claimed product progress: 91%.**
 
 ---
 
@@ -195,6 +206,19 @@ No network fetch is performed by the sim.
 | Validation | Kepler period, Walker T, radius ≈ a; Hypatia RTT / LEOCraft stretch **skip** if `tests/baselines/` files are absent |
 
 See [docs/VIZ.md](VIZ.md) and [docs/VALIDATION.md](VALIDATION.md).
+
+---
+
+## Phase 7 — ops API, packaging, twin
+
+| Piece | Behavior |
+|-------|----------|
+| REST | FastAPI on `127.0.0.1:18765`. Load config, step, list sats, submit jobs, KPI, waves. CORS `*`. OpenAPI at `/docs`. |
+| Twin | CSV schema `sat_id,t,lat,lon,alt,soc,state` → RMSE position (ECEF km) and SoC; `out/twin_compare.json` |
+| Orekit | `make_propagator("orekit")` returns a `PropagatorPort` stub; propagate raises with JDK/Orekit hints. No Java in CI. |
+| Windows | `scripts/install_windows.ps1` + `scs-sim.cmd`. Signed MSI not shipped. Optional PyInstaller script. |
+
+See [docs/API.md](API.md) and [docs/WINDOWS.md](WINDOWS.md).
 
 ---
 

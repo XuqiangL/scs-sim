@@ -4,3 +4,4 @@ pyyaml>=6.0
 sgp4>=2.23
 pytest>=8.0
 # Optional PNG tracks: matplotlib>=3.8  (pip install -e ".[viz]")
+# Optional ops API: fastapi uvicorn httpx  (pip install -e ".[api]")

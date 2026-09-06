@@ -1,6 +1,25 @@
 # Progress log
 
-Claimed product completion at end of this log: **~78%** (Phases 1–5 + Phase 6 viz / validation).
+Claimed product completion at end of this log: **~91%** (Phases 1–7: API + twin + Orekit stub + Windows venv).
+
+## 2026-09-06 — Phase 7 ops API + packaging + twin (~91%)
+
+Continued on `main`. Local FastAPI console, digital-twin CSV compare, Orekit port stub, Windows venv installer. No signed MSI (documented, not a gate).
+
+- FastAPI: `/config/load`, `/sim/step`, `/sats`, `/jobs`, `/kpi`, `/waves`, `/twin/compare`. CORS open. OpenAPI at `/docs`.
+- `scripts/run_api.bat|.ps1`, `scripts/install_windows.ps1`, `scs-sim.cmd`.
+- `scs_sim/twin/`: telemetry schema + RMSE vs table or live propagator; fixture CSVs; `out/twin_compare.json`.
+- `OrekitPropagator` behind `PropagatorPort` — `NotImplementedError` + install hints; CI stays pure Python.
+- `docs/API.md`, `docs/WINDOWS.md`. Optional `scripts/build_pyinstaller.ps1`.
+- Tests: `test_api.py`, `test_twin.py`, `test_orekit.py`.
+
+**Still out of scope:** signed MSI, production auth, live CelesTrak in CI, real Orekit/Java.
+
+```
+Phase 1–6 ██████████  done
+Phase 7   █████████░  API / twin / stub / venv
+Product   ████████████████████████████████████  91%
+```
 
 ## 2026-09-06 — Phase 6 visualization + validation (~78%)
 
@@ -15,7 +34,7 @@ Continued on `main`. Shipped Cesium-ready CZML, an offline 2D viewer, KPI dashbo
 - Windows `scripts/run_phase6.bat` / `.ps1`.
 - Docs: `docs/VIZ.md` (Ion / Sandcastle drop-in).
 
-**Still later (Phase 7):** Windows MSI, ops REST polish, Orekit adapter.
+**Phase 7 (later in this log):** API / twin / Orekit stub / Windows venv.
 
 ```
 Phase 1–5 ██████████  done

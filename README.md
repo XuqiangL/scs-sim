@@ -1,64 +1,64 @@
 # SCS-Sim
 
-**EN** — Windows-first Python simulator for a Starlink-like **compute** constellation (target 10 000 satellites). Phases 1–6: Walker orbits, ISL/GSL, power/thermal, onboard jobs, launch waves, **CZML / offline globe tracks, KPI dashboard, validation**. Product progress **~78%**. Windows MSI and Orekit are not built.
+**EN** — Windows-first Python simulator for a Starlink-like **compute** constellation (target 10 000 satellites). Phases 1–7: Walker orbits, ISL/GSL, power/thermal, onboard jobs, launch waves, CZML / KPI, **local ops REST API, digital-twin CSV compare, Orekit port stub**. Product progress **~91%**. No signed MSI; Orekit is a documented stub (no Java in CI).
 
-**中文** — 工业级类星链**算力**星座仿真器。已完成轨道、网络、电源热、机上调度、发射运维、**CZML 可视化与校验**。完整产品约 **78%**。不含 Windows MSI 或 Orekit。
+**中文** — 工业级类星链**算力**星座仿真器。已完成轨道、网络、电源热、机上调度、发射运维、可视化校验、**本地运维 API 与数字孪生对比**。完整产品约 **91%**。不含已签名 MSI；Orekit 仅为接口桩。
 
 ## Status
 
+```
+████████████████████████████████████░░░░  91%
+```
+
 | | |
 |---|---|
-| Product progress | **78%** (Phases 1–5 + Phase 6 viz / validation) |
-| Viz demo | `configs/phase6_viz.yaml` — 6×6 = 36 sats, CZML + HTML + KPI |
-| Ops demo | `configs/phase5_ops.yaml` — 3 waves, ~104 sats |
-| Compute demo | `configs/phase4_compute.yaml` |
+| Product progress | **91%** (Phases 1–7 core; no signed MSI / live Orekit) |
+| Ops API | `python -m scs_sim.api` — OpenAPI at `/docs` |
+| Viz demo | `configs/phase6_viz.yaml` — CZML + HTML + KPI |
+| Ops demo | `configs/phase5_ops.yaml` — 3 waves |
 | 10k generation | `configs/walker_10k.yaml` |
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/PROGRESS.md](docs/PROGRESS.md), [docs/VIZ.md](docs/VIZ.md), [docs/VALIDATION.md](docs/VALIDATION.md), [docs/REFERENCES.md](docs/REFERENCES.md).
+Docs: [ARCHITECTURE](docs/ARCHITECTURE.md) · [PROGRESS](docs/PROGRESS.md) · [API](docs/API.md) · [WINDOWS](docs/WINDOWS.md) · [VIZ](docs/VIZ.md) · [VALIDATION](docs/VALIDATION.md) · [REFERENCES](docs/REFERENCES.md)
 
-## Install
+## Install (Windows)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install_windows.ps1
+.\.venv\Scripts\python.exe -m pytest
+```
 
 ```bat
-py -3 -m pip install -e ".[dev]"
+py -3 -m pip install -e ".[dev,viz,api]"
 py -3 -m pytest
 ```
 
-Optional PNG ground tracks (SVG always works without this):
+## Quickstart by phase
+
+| Phase | Command | Writes / serves |
+|------:|---------|-----------------|
+| 1 | `scripts\run_demo.bat` | `out/ephemeris_demo.csv` |
+| 2 | `scripts\run_phase2.bat` | topology JSON |
+| 4 | `scripts\run_phase4.bat` | `out/compute_schedule.csv` |
+| 5 | `scripts\run_phase5.bat` | ops timeline HTML |
+| 6 | `scripts\run_phase6.bat` | CZML, `viz_globe.html`, KPI |
+| 7 | `scripts\run_api.bat` | `http://127.0.0.1:18765/docs` |
+| 7 | `scs-sim.cmd twin --telemetry tests\fixtures\telemetry_sample.csv --sim tests\fixtures\sim_state_sample.csv` | `out/twin_compare.json` |
 
 ```bat
-py -3 -m pip install -e ".[dev,viz]"
-```
-
-## Run on Windows
-
-```bat
-scripts\run_demo.bat
-scripts\run_phase4.bat
-scripts\run_phase5.bat
-scripts\run_phase6.bat
-```
-
-```powershell
-.\scripts\run_phase6.ps1
+scs-sim.cmd demo
+scs-sim.cmd viz
+scs-sim.cmd api
 ```
 
 ```bat
-py -3 -m scs_sim.demo_viz
 py -3 -m scs_sim.demo --viz
+py -3 -m scs_sim.demo --ops
+py -3 -m scs_sim.api --config configs\phase6_viz.yaml
 ```
 
-Phase 6 writes (no Cesium API key):
+Phase 6 artifacts need **no Cesium key**. Phase 7 API is local-only (CORS open, no auth).
 
-- `out/constellation.czml` — drop into Cesium ion or a local CesiumJS sandbox
-- `out/viz_globe.html` — Cesium CDN if online, SVG tracks offline
-- `out/ground_tracks.svg` (and `.png` if matplotlib is installed)
-- `out/kpi_dashboard.json` + `out/kpi_report.md`
-
-How to load CZML: [docs/VIZ.md](docs/VIZ.md).
-
-Phase 5 writes `out/ops_timeline.json`, `out/ops_events.csv`, and a static `out/ops_timeline.html`.
-
-Optional real-catalog overlay: set `deployment.tle_path` to a CelesTrak Starlink TLE. The sim does not download catalogs.
+Optional catalog overlay: set `deployment.tle_path` to a CelesTrak TLE file. The sim does not download catalogs.
 
 ## License
 
