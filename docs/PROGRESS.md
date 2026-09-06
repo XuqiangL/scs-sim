@@ -1,6 +1,28 @@
 # Progress log
 
-Claimed product completion at end of this log: **~62%** (Phases 1–4 + Phase 5 ops core).
+Claimed product completion at end of this log: **~78%** (Phases 1–5 + Phase 6 viz / validation).
+
+## 2026-09-06 — Phase 6 visualization + validation (~78%)
+
+Continued on `main`. Shipped Cesium-ready CZML, an offline 2D viewer, KPI dashboard, and a validation harness. No Cesium / Ion key is required to generate anything.
+
+- `out/constellation.czml` — clock + sat cartographicDegrees from the Kepler+J2 propagator; last-snapshot ISL/GSL polylines; GS points.
+- `out/viz_globe.html` — embedded SVG ground tracks always work offline; CesiumJS from jsDelivr is optional (Natural Earth II, empty Ion token).
+- `out/ground_tracks.svg` always; `out/ground_tracks.png` if `pip install -e ".[viz]"` (matplotlib).
+- KPI: coverage proxy (GS with ≥1 GSL), mean/max ISL degree, GS↔GS stretch histogram, job completion rate, fleet SoC → `out/kpi_dashboard.json` + `out/kpi_report.md`.
+- `tests/test_validation.py` + `docs/VALIDATION.md`: period vs Kepler formula, Walker T, radius ≈ a. Hypatia RTT / LEOCraft stretch tests **skip** when `tests/baselines/` files are absent.
+- `configs/phase6_viz.yaml` (6×6 = 36); `python -m scs_sim.demo_viz` / `--viz`.
+- Windows `scripts/run_phase6.bat` / `.ps1`.
+- Docs: `docs/VIZ.md` (Ion / Sandcastle drop-in).
+
+**Still later (Phase 7):** Windows MSI, ops REST polish, Orekit adapter.
+
+```
+Phase 1–5 ██████████  done
+Phase 6   █████████░  CZML / SVG / KPI / validation
+Phase 7   ░░░░░░░░░░  MSI / REST / Orekit
+Product   ███████████████████████████████  78%
+```
 
 ## 2026-09-06 — Phase 5 insertion + constellation operations (~62%)
 

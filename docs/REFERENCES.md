@@ -6,12 +6,15 @@ implementation (MIT). We do **not** vendor-copy large GPL codebases.
 Phase 2 (+Grid, GSL, stretch) is inspired by **Hypatia**, **StarPerf**, **LEOCraft**,
 and **LEOPath**. Phase 3–4 power, thermal, SAA, and the greedy eclipse look-ahead
 scheduler are clean-room stubs inspired by **orbital-compute** — not a copy.
+Phase 6 CZML / HTML is a **clean-room exporter** (no Hypatia satviz / StarPerf
+Cesium app code). Optional numeric comparisons are documented in
+`docs/VALIDATION.md` and do not vendor those repos.
 
 | Project | Role vs SCS-Sim | License (upstream) | Link |
 |---------|-----------------|--------------------|------|
 | **orbital-compute** | End-to-end “GPUs in orbit” stack: SGP4, power/thermal, ISL, scheduler. Informs Phase 3–4 ports. | MIT | https://github.com/ShipItAndPray/orbital-compute |
 | **jaxsgp4** | JAX / GPU-batch SGP4. Optional accelerator after Phase 1; extra `jax` extra in `pyproject.toml` only. | check repo | search PyPI `jaxsgp4` / ESA & research ports |
-| **Hypatia** | LEO network sim (ETH / IMC 2020): `satgenpy` + ns-3 + Cesium. Phase 2 routing / satviz inspiration. **ns3-sat-sim is GPL-2 — do not copy.** | MIT (satgenpy, satviz) / GPL-2 (ns-3) | https://github.com/snkas/hypatia |
+| **Hypatia** | LEO network sim (ETH / IMC 2020): `satgenpy` + ns-3 + Cesium. Phase 2 routing inspiration; Phase 6 optional RTT baseline only. **ns3-sat-sim is GPL-2 — do not copy.** | MIT (satgenpy, satviz) / GPL-2 (ns-3) | https://github.com/snkas/hypatia |
 | **StarPerf** | Mega-constellation performance + Cesium + scaling. Phase 2 area-to-area metrics inspiration. | check repo | https://github.com/SpaceNetLab/StarPerf_Simulator |
 | **DSNS** | Event-driven LEO / interplanetary network (Oxford). Scalability + actor model for later clock/net. **GPLv3 — do not vendor.** | GPLv3 | https://github.com/ssloxford/DSNS · https://dsns.space |
 | **LEOCraft** | Flow-level LEO (+Grid shells, throughput, stretch). Walker / shell config inspiration. | check repo | https://github.com/suvambasak/LEOCraft |

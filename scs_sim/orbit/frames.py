@@ -160,21 +160,33 @@ def geodetic_to_ecef_m(
     return np.asarray(stacked, dtype=float)
 
 
-def ecef_to_geodetic(r_ecef_m: np.ndarray) -> tuple[float, float, float]:
-    """ECEF metres → (lat_deg, lon_deg, alt_m), WGS-84 Bowring iteration."""
-    x, y, z = (float(v) for v in np.asarray(r_ecef_m, dtype=float).reshape(3))
+def ecef_to_geodetic_n(r_ecef_m: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """ECEF (N, 3) metres → lat_deg, lon_deg, alt_m arrays (WGS-84 Bowring)."""
+    r = np.asarray(r_ecef_m, dtype=float).reshape(-1, 3)
+    x, y, z = r[:, 0], r[:, 1], r[:, 2]
     e2 = FLATTENING * (2.0 - FLATTENING)
     lon = np.arctan2(y, x)
-    p = float(np.hypot(x, y))
+    p = np.hypot(x, y)
     lat = np.arctan2(z, p * (1.0 - e2))
     for _ in range(10):
         sl = np.sin(lat)
         n_prime = R_EARTH_M / np.sqrt(1.0 - e2 * sl * sl)
         lat = np.arctan2(z + e2 * n_prime * sl, p)
     sl = np.sin(lat)
+    cl = np.cos(lat)
     n_prime = R_EARTH_M / np.sqrt(1.0 - e2 * sl * sl)
-    alt = p / max(np.cos(lat), 1e-16) - n_prime
-    return float(np.rad2deg(lat)), float(np.rad2deg(lon)), float(alt)
+    alt = np.where(
+        np.abs(cl) > 1e-12,
+        p / cl - n_prime,
+        np.abs(z) / np.maximum(np.abs(sl), 1e-16) - n_prime * (1.0 - e2),
+    )
+    return np.rad2deg(lat), np.rad2deg(lon), alt
+
+
+def ecef_to_geodetic(r_ecef_m: np.ndarray) -> tuple[float, float, float]:
+    """ECEF metres → (lat_deg, lon_deg, alt_m), WGS-84 Bowring iteration."""
+    lat, lon, alt = ecef_to_geodetic_n(np.asarray(r_ecef_m, dtype=float).reshape(1, 3))
+    return float(lat[0]), float(lon[0]), float(alt[0])
 
 
 def elevation_deg(r_gs_ecef_m: np.ndarray, r_sat_ecef_m: np.ndarray) -> np.ndarray:

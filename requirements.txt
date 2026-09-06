@@ -1,5 +1,6 @@
-# Phase 1 runtime + test extras (Windows / Linux)
+# Core runtime + test extras (Windows / Linux)
 numpy>=1.26
 pyyaml>=6.0
 sgp4>=2.23
 pytest>=8.0
+# Optional PNG tracks: matplotlib>=3.8  (pip install -e ".[viz]")

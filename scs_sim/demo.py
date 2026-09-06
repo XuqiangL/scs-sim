@@ -1,12 +1,11 @@
-"""Phase 1–4 demo: orbits, topology, environment, compute schedule.
-
-Phase: 4 (compute) + 3 (power/thermal/radiation)
-Completion: 90%
+"""Phase 1–6 demo: orbits, topology, environment, compute, ops, viz.
 
 Usage::
 
     python -m scs_sim.demo
     python -m scs_sim.demo --config configs/phase4_compute.yaml
+    python -m scs_sim.demo --ops
+    python -m scs_sim.demo --viz
     python -m scs_sim.demo --no-network --no-compute
 """
 
@@ -384,12 +383,12 @@ def run_demo(
     else:
         print("  compute      : skipped")
     print("  Phase 5      : python -m scs_sim.demo_ops  (deployment / lifecycle)")
-    print("  Phase 6      : Cesium / MSI / Orekit — not built")
+    print("  Phase 6      : python -m scs_sim.demo_viz  (CZML / KPI / tracks)")
     return out_path
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="SCS-Sim Phase 1–5 Walker + compute + ops demo")
+    parser = argparse.ArgumentParser(description="SCS-Sim Phase 1–6 Walker + compute + ops + viz demo")
     parser.add_argument(
         "--config",
         type=Path,
@@ -406,6 +405,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Run Phase 5 deployment/ops demo (default config: phase5_ops.yaml)",
     )
+    parser.add_argument(
+        "--viz",
+        action="store_true",
+        help="Run Phase 6 CZML / KPI / ground-track demo (default: phase6_viz.yaml)",
+    )
     args = parser.parse_args(argv)
 
     if args.ops:
@@ -414,6 +418,14 @@ def main(argv: list[str] | None = None) -> int:
         here = Path("configs") / "phase5_ops.yaml"
         cfg_path = args.config if args.config is not None else (here if here.is_file() else default_config_path())
         run_ops_demo(cfg_path, steps=args.steps)
+        return 0
+
+    if args.viz:
+        from scs_sim.demo_viz import run_viz_demo
+
+        here = Path("configs") / "phase6_viz.yaml"
+        cfg_path = args.config if args.config is not None else (here if here.is_file() else default_config_path())
+        run_viz_demo(cfg_path, max_sats=args.max_sats, steps=args.steps)
         return 0
 
     cfg_path = args.config if args.config is not None else default_config_path()

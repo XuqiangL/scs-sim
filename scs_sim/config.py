@@ -1,7 +1,7 @@
-"""Load YAML constellation, network, environment, compute, and ops configuration.
+"""Load YAML constellation, network, environment, compute, ops, and viz configuration.
 
-Phase: 1–5
-Completion: 95%
+Phase: 1–6
+Completion: 96%
 """
 
 from __future__ import annotations
@@ -128,6 +128,13 @@ class DemoConfig:
     ops_timeline: str = "out/ops_timeline.json"
     ops_events: str = "out/ops_events.csv"
     ops_html: str = "out/ops_timeline.html"
+    czml_output: str = "out/constellation.czml"
+    viz_html: str = "out/viz_globe.html"
+    tracks_png: str = "out/ground_tracks.png"
+    tracks_svg: str = "out/ground_tracks.svg"
+    kpi_json: str = "out/kpi_dashboard.json"
+    kpi_md: str = "out/kpi_report.md"
+    max_isl_czml: int = 16
 
 
 @dataclass(frozen=True)
@@ -306,6 +313,13 @@ def load_config(path: str | Path) -> SimConfig:
         ops_timeline=str(demo_raw.get("ops_timeline", "out/ops_timeline.json")),
         ops_events=str(demo_raw.get("ops_events", "out/ops_events.csv")),
         ops_html=str(demo_raw.get("ops_html", "out/ops_timeline.html")),
+        czml_output=str(demo_raw.get("czml_output", "out/constellation.czml")),
+        viz_html=str(demo_raw.get("viz_html", "out/viz_globe.html")),
+        tracks_png=str(demo_raw.get("tracks_png", "out/ground_tracks.png")),
+        tracks_svg=str(demo_raw.get("tracks_svg", "out/ground_tracks.svg")),
+        kpi_json=str(demo_raw.get("kpi_json", "out/kpi_dashboard.json")),
+        kpi_md=str(demo_raw.get("kpi_md", "out/kpi_report.md")),
+        max_isl_czml=int(demo_raw.get("max_isl_czml", 16)),
     )
     earth_raw = raw.get("earth") or {}
     earth = EarthConfig(model=str(earth_raw.get("model", "wgs84")))
