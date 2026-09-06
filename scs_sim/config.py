@@ -1,6 +1,6 @@
-"""Load YAML constellation, network, and environment configuration.
+"""Load YAML constellation, network, environment, and compute configuration.
 
-Phase: 2 (network) / 3 (environment keys)
+Phase: 1–4
 Completion: 95%
 """
 
@@ -14,6 +14,8 @@ from typing import Any
 import yaml
 
 from scs_sim.clock import ensure_utc
+from scs_sim.environment.power import PowerConfig
+from scs_sim.environment.thermal import ThermalConfig
 
 
 @dataclass(frozen=True)
@@ -86,16 +88,43 @@ class EnvironmentConfig:
 
 
 @dataclass(frozen=True)
+class RadiationConfig:
+    model: str = "saa_heuristic"
+    peak_flux_cm2_s: float = 2000.0
+
+
+@dataclass(frozen=True)
+class JobConfig:
+    id: str
+    flops: float
+    dest_gs: str | None = None
+    origin_gs: str | None = None
+
+
+@dataclass(frozen=True)
+class ComputeConfig:
+    enabled: bool = False
+    flops: float = 2.0e13
+    memory_gib: float = 32.0
+    idle_w: float = 90.0
+    busy_w: float = 450.0
+    min_soc: float = 0.12
+    jobs: tuple[JobConfig, ...] = ()
+
+
+@dataclass(frozen=True)
 class DemoConfig:
     steps: int = 12
     dt_seconds: float = 60.0
     max_sats: int | None = 100
     output: str = "out/ephemeris_demo.csv"
-    subsample: str = "first_shell"  # first_shell | stride
+    subsample: str = "first_shell"  # first_shell | stride | spread_planes
     network: bool = True
     topology_steps: int | None = 4
     topology_output: str = "out/topology_demo.json"
     eclipse_columns: bool = True
+    environment_output: str = "out/environment_demo.csv"
+    compute_output: str = "out/compute_schedule.csv"
 
 
 @dataclass(frozen=True)
@@ -117,6 +146,10 @@ class SimConfig:
     gsl: GSLConfig = field(default_factory=GSLConfig)
     ground_stations: tuple[GroundStationConfig, ...] = ()
     environment: EnvironmentConfig = field(default_factory=EnvironmentConfig)
+    power: PowerConfig = field(default_factory=PowerConfig)
+    thermal: ThermalConfig = field(default_factory=ThermalConfig)
+    radiation: RadiationConfig = field(default_factory=RadiationConfig)
+    compute: ComputeConfig = field(default_factory=ComputeConfig)
     description: str = ""
     path: Path | None = None
 
@@ -139,6 +172,10 @@ class SimConfig:
             raise ValueError("isl.max_range_km must be positive")
         if self.demo.subsample not in {"first_shell", "stride", "spread_planes"}:
             raise ValueError("demo.subsample must be first_shell, stride, or spread_planes")
+        if self.compute.enabled and self.compute.busy_w < self.compute.idle_w:
+            raise ValueError("compute.busy_w must be >= idle_w")
+        if not (0.0 <= self.power.initial_soc <= 1.0):
+            raise ValueError("power.initial_soc must be in [0, 1]")
 
 
 def _parse_epoch(value: str | datetime) -> datetime:
@@ -196,6 +233,8 @@ def load_config(path: str | Path) -> SimConfig:
         topology_steps=None if topo_steps in (None, "all") else int(topo_steps),
         topology_output=str(demo_raw.get("topology_output", "out/topology_demo.json")),
         eclipse_columns=bool(demo_raw.get("eclipse_columns", True)),
+        environment_output=str(demo_raw.get("environment_output", "out/environment_demo.csv")),
+        compute_output=str(demo_raw.get("compute_output", "out/compute_schedule.csv")),
     )
     earth_raw = raw.get("earth") or {}
     earth = EarthConfig(model=str(earth_raw.get("model", "wgs84")))
@@ -223,6 +262,51 @@ def load_config(path: str | Path) -> SimConfig:
         area_m2=float(env_raw.get("area_m2", 4.0)),
         mass_kg=float(env_raw.get("mass_kg", 300.0)),
     )
+    pwr_raw = raw.get("power") or {}
+    power = PowerConfig(
+        panel_area_m2=float(pwr_raw.get("panel_area_m2", 8.0)),
+        panel_efficiency=float(pwr_raw.get("panel_efficiency", 0.28)),
+        solar_constant_w_m2=float(pwr_raw.get("solar_constant_w_m2", 1361.0)),
+        battery_capacity_wh=float(pwr_raw.get("battery_capacity_wh", 200.0)),
+        initial_soc=float(pwr_raw.get("initial_soc", 0.75)),
+        charge_efficiency=float(pwr_raw.get("charge_efficiency", 0.95)),
+        platform_idle_w=float(pwr_raw.get("platform_idle_w", 50.0)),
+        max_charge_w=float(pwr_raw.get("max_charge_w", 600.0)),
+    )
+    th_raw = raw.get("thermal") or {}
+    thermal = ThermalConfig(
+        mass_kg=float(th_raw.get("mass_kg", 300.0)),
+        cp_j_kg_k=float(th_raw.get("cp_j_kg_k", 900.0)),
+        area_m2=float(th_raw.get("area_m2", 6.0)),
+        absorptivity=float(th_raw.get("absorptivity", 0.65)),
+        emissivity=float(th_raw.get("emissivity", 0.80)),
+        initial_temp_k=float(th_raw.get("initial_temp_k", 290.0)),
+        solar_constant_w_m2=float(th_raw.get("solar_constant_w_m2", 1361.0)),
+    )
+    rad_raw = raw.get("radiation") or {}
+    radiation = RadiationConfig(
+        model=str(rad_raw.get("model", "saa_heuristic")),
+        peak_flux_cm2_s=float(rad_raw.get("peak_flux_cm2_s", 2000.0)),
+    )
+    cmp_raw = raw.get("compute") or {}
+    jobs = tuple(
+        JobConfig(
+            id=str(j["id"]),
+            flops=float(j["flops"]),
+            dest_gs=None if j.get("dest_gs") in (None, "", "none") else str(j.get("dest_gs")),
+            origin_gs=None if j.get("origin_gs") in (None, "", "none") else str(j.get("origin_gs")),
+        )
+        for j in (cmp_raw.get("jobs") or [])
+    )
+    compute = ComputeConfig(
+        enabled=bool(cmp_raw.get("enabled", bool(jobs))),
+        flops=float(cmp_raw.get("flops", 2.0e13)),
+        memory_gib=float(cmp_raw.get("memory_gib", 32.0)),
+        idle_w=float(cmp_raw.get("idle_w", 90.0)),
+        busy_w=float(cmp_raw.get("busy_w", 450.0)),
+        min_soc=float(cmp_raw.get("min_soc", 0.12)),
+        jobs=jobs,
+    )
 
     cfg = SimConfig(
         name=str(raw.get("name", cfg_path.stem)),
@@ -235,6 +319,10 @@ def load_config(path: str | Path) -> SimConfig:
         gsl=gsl,
         ground_stations=stations,
         environment=environment,
+        power=power,
+        thermal=thermal,
+        radiation=radiation,
+        compute=compute,
         description=str(raw.get("description", "")).strip(),
         path=cfg_path,
     )

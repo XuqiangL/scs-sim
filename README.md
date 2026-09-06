@@ -1,16 +1,16 @@
 # SCS-Sim
 
-**EN** — Windows-first Python simulator for a Starlink-like **compute** constellation (target 10 000 satellites). Phases 1–3: Walker orbits, time-varying +Grid ISL / GSL topology, GS↔GS routing metrics, cylindrical eclipse, exponential atmosphere. Product progress **~32%**. Cesium, compute scheduling, and ops packaging are not built.
+**EN** — Windows-first Python simulator for a Starlink-like **compute** constellation (target 10 000 satellites). Phases 1–4: Walker orbits, +Grid ISL/GSL routing, power/thermal/SAA, onboard job scheduler. Product progress **~50%**. Cesium and ops packaging are not built.
 
-**中文** — 工业级类星链计算星座仿真器（目标约 1 万星）。已完成轨道 / Walker、+Grid 星间链路与信关站、快照路由、圆柱地影与指数大气。完整产品约 **32%**。不含 Cesium、机上调度或运维打包。
+**中文** — 工业级类星链**算力**星座仿真器（目标约 1 万星）。已完成轨道、星间/信关站、电源热与 SAA、机上作业调度。完整产品约 **50%**。不含 Cesium 或运维安装包。
 
 ## Status
 
 | | |
 |---|---|
-| Product progress | **32%** (Phase 1+2 done, Phase 3 minimal) |
-| Default demo | 100 sats from first 10k shell × 12 × 60 s + 4 topology snapshots |
-| Compact network demo | `configs/phase2_network.yaml` (12×10 = 120) |
+| Product progress | **50%** (Phases 1–3 done, Phase 4 core) |
+| Default demo | 100 sats + environment + a few jobs |
+| Compute demo | `configs/phase4_compute.yaml` (48 sats, 10 jobs) |
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/PROGRESS.md](docs/PROGRESS.md), [docs/REFERENCES.md](docs/REFERENCES.md).
 
@@ -19,70 +19,50 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/PROGRESS.md](docs/PROGRE
 - Python 3.11+ (3.12 OK)
 - Windows 10/11 (primary), Linux/macOS for CI
 
-Optional later: `jax` / jaxsgp4 — **not required**.
-
 ## Install
 
 ```bat
-py -3 -m pip install -e .
-```
-
-```bash
-pip install -e ".[dev]"
+py -3 -m pip install -e ".[dev]"
 pytest
 ```
 
 ## Run on Windows
 
-Phase 1–3 (default 10k config, subsampled):
-
 ```bat
 scripts\run_demo.bat
+scripts\run_phase2.bat
+scripts\run_phase4.bat
 ```
 
 ```powershell
 .\scripts\run_demo.ps1
+.\scripts\run_phase4.ps1
 ```
-
-Denser complete +Grid (120 sats):
-
-```bat
-scripts\run_phase2.bat
-```
-
-```powershell
-.\scripts\run_phase2.ps1
-```
-
-Any platform:
 
 ```bash
 python -m scs_sim.demo
-python -m scs_sim.demo --config configs/phase2_network.yaml
-python -m scs_sim.demo --no-network
+python -m scs_sim.demo --config configs/phase4_compute.yaml
+python -m scs_sim.demo --no-network --no-compute
 ```
 
 Writes:
 
-- `out/ephemeris_demo.csv` — ECI/ECEF (Phase 1) plus `eclipse`, `sunlight`, `density_kg_m3`
-- `out/topology_demo.json` — ISL/GSL snapshots + routing summary
-- `out/topology_edges.csv` — edge list
+- `out/ephemeris_demo.csv` — ECI/ECEF + eclipse columns
+- `out/environment_demo.csv` — SoC, temperature, load, SAA flux/dose
+- `out/topology_demo.json` / `out/topology_edges.csv`
+- `out/compute_schedule.csv` — job placement and completions
 
 ## Layout
 
 ```
-scs_sim/config.py          # YAML (constellation + ISL/GSL + environment)
-scs_sim/clock.py           # discrete time
 scs_sim/orbit/             # Kepler+J2, SGP4, frames
 scs_sim/constellation/     # Walker-delta
-scs_sim/network/           # +Grid ISL, GSL, topology, routing
-scs_sim/environment/       # eclipse, exponential atmosphere; radiation TODO
-scs_sim/compute/           # Phase 4 ports only
-scs_sim/demo.py
-configs/walker_10k.yaml
-configs/phase2_network.yaml
+scs_sim/network/           # +Grid ISL, GSL, routing, reachability
+scs_sim/environment/       # eclipse, atmosphere, power, thermal, SAA
+scs_sim/compute/           # nodes, jobs, greedy eclipse scheduler
+configs/phase4_compute.yaml
 ```
 
 ## License
 
-MIT. Third-party GPL simulators (Hypatia ns-3, DSNS) are **references only** — not vendored.
+MIT. Third-party GPL simulators are references only — not vendored.

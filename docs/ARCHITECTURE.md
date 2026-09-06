@@ -2,9 +2,9 @@
 
 **Product:** industrial-grade Starlink-like **compute** constellation simulator  
 **Horizon:** fly ~10 000 satellites for orbital insertion, deployment, and operations  
-**Quota stop:** keep going through Phase 2–3 in this increment; **do not start Cesium / compute scheduler / ops (Phases 4–6).**
+**Out of scope still:** Cesium UI, ops deployment automation, Windows MSI, Orekit adapter.
 
-**Claimed product progress: 32%** (Phase 1 done + Phase 2 done + Phase 3 minimal physics).
+**Claimed product progress: 50%** (Phases 1–2 done, Phase 3 done, Phase 4 core scheduler).
 
 ---
 
@@ -13,58 +13,57 @@
 ```mermaid
 flowchart TB
     subgraph P1["Phase 1 — GREEN — done"]
-        CFG["scs_sim/config.py<br/>YAML constellation"]
-        CLK["scs_sim/clock.py<br/>discrete steps"]
-        WAL["scs_sim/constellation/<br/>Walker-delta ≤10k"]
-        ORB["scs_sim/orbit/<br/>Kepler+J2 · python-sgp4"]
+        CFG["config YAML"]
+        CLK["discrete clock"]
+        WAL["Walker-delta ≤10k"]
+        ORB["Kepler+J2 / SGP4"]
         FRM["ECI / ECEF / geodetic"]
-        DEM["python -m scs_sim.demo<br/>CSV ephemeris"]
-        CFG --> WAL
-        WAL --> ORB
-        CLK --> ORB
-        ORB --> FRM
-        FRM --> DEM
-        CFG --> DEM
     end
 
     subgraph P2["Phase 2 — GREEN — done"]
-        ISL["+Grid ISL + LOS + range"]
-        GSL["GSL elevation attach"]
-        TOP["topology snapshots JSON"]
-        RTE["Dijkstra / FW stretch"]
+        ISL["+Grid ISL + LOS"]
+        GSL["GSL elevation"]
+        TOP["topology snapshots"]
+        RTE["Dijkstra stretch"]
     end
 
-    subgraph P3["Phase 3 — GREEN — minimal"]
-        ATM["exponential atmosphere"]
+    subgraph P3["Phase 3 — GREEN — done"]
         ECL["cylindrical eclipse"]
-        RAD["radiation port TODO"]
+        ATM["exponential atmosphere"]
+        PWR["solar + battery SoC"]
+        THM["Stefan–Boltzmann T"]
+        RAD["SAA dose heuristic"]
     end
 
-    subgraph P4["Phase 4 — NOT IN THIS RELEASE"]
-        NOD["onboard compute node"]
-        SCH["job scheduler"]
-        PWR["power / thermal"]
+    subgraph P4["Phase 4 — GREEN — core"]
+        NOD["ComputeNode flops/W"]
+        JOB["Job + dest GS"]
+        SCH["greedy + eclipse look-ahead"]
     end
 
-    subgraph P56["Phases 5–6 — NOT IN THIS RELEASE"]
+    subgraph P56["Phases 5–6 — NOT STARTED"]
         UI["Cesium UI"]
-        OPS["Windows ops / packaging"]
+        OPS["Windows ops / MSI"]
     end
 
-    DEM --> ISL
-    DEM --> GSL
-    ISL --> TOP
-    GSL --> TOP
+    CFG --> WAL --> ORB --> FRM
+    CLK --> ORB
+    FRM --> ISL --> TOP
+    FRM --> GSL --> TOP
     TOP --> RTE
-    DEM --> ECL
-    DEM --> ATM
-    ATM -.->|hook, off by default| ORB
-    RAD -.-> SCH
-    RTE --> UI
-    SCH --> OPS
+    FRM --> ECL --> PWR
+    PWR --> THM
+    FRM --> RAD
+    PWR --> SCH
+    ECL --> SCH
+    TOP --> SCH
+    NOD --> SCH
+    JOB --> SCH
+    SCH -.-> UI
+    SCH -.-> OPS
 ```
 
-Hexagonal-ish rule: **ports live in each package**; adapters (Kepler+J2, SGP4, +Grid, cylindrical eclipse) plug in without rewriting the demo.
+Hexagonal-ish rule: ports stay in each package. Phase 4 scheduler reads power / eclipse / topology without owning them.
 
 ---
 
@@ -72,87 +71,66 @@ Hexagonal-ish rule: **ports live in each package**; adapters (Kepler+J2, SGP4, +
 
 | Module | Phase | Status | Completion | Notes |
 |--------|------:|--------|-----------:|-------|
-| `scs_sim/config.py` | 1–3 | **green** | 95% | YAML + ISL/GSL/GS/environment |
+| `scs_sim/config.py` | 1–4 | **green** | 95% | constellation + ISL/GSL + power/thermal + jobs |
 | `scs_sim/clock.py` | 1 | **green** | 90% | fixed-step UTC clock |
 | `scs_sim/orbit/` | 1+3 | **green** | 90% | Kepler+J2; SGP4; optional drag hook |
-| `scs_sim/constellation/` | 1 | **green** | 95% | Walker-delta; first_shell subsample |
-| `scs_sim/demo.py` | 1–3 | **green** | 90% | CSV + topology + eclipse columns |
-| `configs/walker_10k.yaml` | 1–3 | **green** | 100% | 10008 sats + GS + ISL |
-| `configs/phase2_network.yaml` | 2 | **green** | 100% | complete 12×10 Walker |
-| `scs_sim/network/` | 2 | **green** | 90% | +Grid, GSL, snapshots, routing |
-| `scs_sim/environment/` eclipse+atm | 3 | **green** | 75% | cylindrical shadow + exponential ρ |
-| `scs_sim/environment/` radiation | 3 | placeholder | 5% | **still TODO** |
-| `scs_sim/compute/` | 4 | placeholder | 5% | node + scheduler **interfaces only** |
+| `scs_sim/constellation/` | 1 | **green** | 95% | Walker-delta; subsample modes |
+| `scs_sim/network/` | 2 | **green** | 90% | +Grid, GSL, snapshots, reachability |
+| `scs_sim/environment/` eclipse+atm | 3 | **green** | 90% | cylinder shadow + exponential ρ |
+| `scs_sim/environment/` power | 3 | **green** | 90% | solar + SoC ∈ [0,1] |
+| `scs_sim/environment/` thermal | 3 | **green** | 85% | lumped SB temperature |
+| `scs_sim/environment/` radiation | 3 | **green** | 80% | SAA heuristic + dose |
+| `scs_sim/compute/` | 4 | **green** | 90% | node, jobs, greedy look-ahead |
+| `scs_sim/demo.py` | 1–4 | **green** | 90% | ephemeris + env + schedule CSVs |
+| `configs/phase4_compute.yaml` | 4 | **green** | 100% | 48-sat Walker + 10 jobs |
 | Cesium UI | 5 | **not started** | 0% | — |
-| Power / thermal models | 4 | **not started** | 0% | — |
 | Ops packaging | 6 | **not started** | 0% | run scripts only |
 
 ### Progress bar (product)
 
 ```
-█████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  32%
-Phase 1 done · Phase 2 done · Phase 3 minimal
-Quota stop ≈ 10% of Cursor/Grok Bot usage — not a product-phase freeze
+████████████████████░░░░░░░░░░░░░░░░░░░░░░░░  50%
+Phase 1–3 done · Phase 4 core · no Cesium / ops
 ```
 
-**Claimed product progress: 32%.**
+**Claimed product progress: 50%.**
 
 ---
 
-## Runtime data flow (Phase 1–3)
+## Runtime data flow (Phase 1–4)
 
-1. Load YAML (`walker_10k.yaml` or `phase2_network.yaml`).
-2. Expand Walker shells; subsample (`spread_planes` on the 10k demo keeps intra-plane +Grid and global GS coverage; `first_shell` / `stride` also supported).
-3. Tick `SimClock`; propagate Kepler+J2 (drag off by default).
-4. Write ECI/ECEF (+ optional eclipse / density) to `out/ephemeris_demo.csv`.
-5. On topology steps: +Grid ISL (LOS + max range) + GSL elevation attach.
-6. Dijkstra GS↔GS: hop count and path-length / geodesic **stretch**.
-7. Write `out/topology_demo.json` and `out/topology_edges.csv`.
-
-No compute job queue, no Cesium, no radiation maps.
+1. Load YAML; expand Walker; subsample.
+2. Each clock step: propagate → eclipse/sunlight → topology (optional) → **schedule jobs** (sun, next-step sun, SoC, dest-GS reachability) → tick FLOPs → **battery / thermal / SAA dose**.
+3. Write `out/ephemeris_demo.csv`, `out/environment_demo.csv`, `out/topology_demo.json`, `out/compute_schedule.csv`.
 
 ---
 
-## Network model (Phase 2)
+## Compute scheduler (Phase 4)
 
-| Piece | Rule |
-|-------|------|
-| +Grid candidates | same shell: intra-plane slot ±1, inter-plane plane ±1 (wrap P/S) |
-| Feasible ISL | range ≤ `isl.max_range_km` and chord misses the Earth sphere |
-| Geometric fill | if `fill_geometric`, top up each sat to `max_degree` nearest LOS+range |
-| GSL | WGS-84 GS; elevation ≥ `gsl.min_elevation_deg`; attach `max_attach` nearest |
-| Routing | undirected weighted graph (range_km); Dijkstra; FW available for tests |
+| Rule | Behavior |
+|------|----------|
+| Capacity | `compute.flops` FLOP/s, `idle_w` / `busy_w` |
+| Eligibility | not busy; SoC ≥ `min_soc`; if `dest_gs` set, sat must reach that GS (GSL or ISL hops) |
+| Score | 3·sun + 2·sun_next + 4·SoC + dest bonus − eclipse penalty |
+| Progress | `remaining -= flops * dt`; stall and mark **delayed** if SoC hits 0 |
+| Energy | `busy_w * dt` while running |
 
-Clean-room APIs inspired by Hypatia, StarPerf, LEOCraft, LEOPath — not vendored.
+Inspired by orbital-compute (clean-room). Not a full PHOENIX / multi-resource packer.
 
 ---
 
-## Environment model (Phase 3)
+## Environment (Phase 3)
 
-| Piece | Status |
+| Piece | Model |
 |-------|--------|
-| Sun vector | low-precision Meeus mean longitude |
-| Eclipse | night-side cylinder radius Rₑ (umbra) + solar-angle penumbra |
-| Atmosphere | ρ = ρ_ref exp(−(h−h_ref)/H); cannonball drag accel |
-| Drag on orbit | `environment.apply_drag` first-order *a* decay — **off by default** |
-| Radiation | `NullRadiation` only — TODO |
+| Eclipse | night-side Earth cylinder + penumbra annulus |
+| Power | P_solar = sun · A · η · 1361 W; SoC clip [0,1] |
+| Thermal | C dT/dt = α S A_abs sun + Q_int − εσA T⁴ |
+| Radiation | SAA Gaussian (lat −25°, lon −50°) + polar horns; dose += flux·dt |
+| Drag | optional, off by default |
 
 ---
 
-## Why these boundaries
+## Scalability
 
-| Later plugin | Port today | Inspiration (clean-room) |
-|--------------|------------|--------------------------|
-| jaxsgp4 / Orekit | `orbit.PropagatorPort` | python-sgp4, Orekit, poliastro |
-| richer routing | `network` graph | Hypatia, StarPerf, LEOCraft, LEOPath |
-| Event-driven net | same + `SimClock` | DSNS |
-| MSIS / conical shadow | `environment.*Port` | orbital-compute, Orekit |
-| GPU jobs in orbit | `compute.SchedulerPort` | orbital-compute |
-
-Do **not** vendor-copy GPL trees (Hypatia `ns3-sat-sim`, DSNS).
-
----
-
-## Scalability note (10k)
-
-Walker generation and Kepler+J2 stay vectorized. Topology uses O(N²) geometric fill only on the **demo subsample** (default 100, or 120 on `phase2_network.yaml`). Full 10k adjacency is a later ops concern.
+Demo subsample (48–120 sats) for topology + scheduler. Full 10k generation still works; do not run O(N²) fill at N=10008 in the default scripts.

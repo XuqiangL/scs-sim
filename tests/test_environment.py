@@ -13,6 +13,9 @@ import numpy as np
 from scs_sim.constants import R_EARTH_M
 from scs_sim.environment.atmosphere import ExponentialAtmosphere
 from scs_sim.environment.eclipse import CylindricalEclipse
+from scs_sim.environment.power import BatteryBank, PowerConfig
+from scs_sim.environment.radiation import SAARadiation
+from scs_sim.environment.thermal import ThermalState
 
 
 def test_cylindrical_umbra_and_sun() -> None:
@@ -41,3 +44,67 @@ def test_exponential_density_decreases_with_altitude() -> None:
     assert a.shape == (1, 3)
     # Drag opposes velocity
     assert float(a[0, 1]) < 0.0
+
+
+def test_eclipse_flag_consistency() -> None:
+    epoch = datetime(2026, 9, 6, tzinfo=timezone.utc)
+    ecl = CylindricalEclipse(sun_hat=np.array([1.0, 0.0, 0.0]))
+    r = np.array(
+        [
+            [-8000_000.0, 0.0, 0.0],
+            [8000_000.0, 0.0, 0.0],
+        ]
+    )
+    labels = ecl.label(r, epoch)
+    sun = ecl.sunlight_fraction(r, epoch)
+    umbra = ecl.in_umbra(r, epoch)
+    assert labels[0] == "umbra"
+    assert sun[0] == 0.0
+    assert umbra[0]
+    assert labels[1] == "sun"
+    assert sun[1] == 1.0
+    assert not umbra[1]
+    # umbra ⇒ no sunlight; full sunlight ⇒ not umbra
+    for i, lab in enumerate(labels):
+        if lab == "umbra":
+            assert sun[i] == 0.0
+        if sun[i] == 1.0:
+            assert not umbra[i]
+
+
+def test_battery_soc_stays_in_unit_interval() -> None:
+    bank = BatteryBank(2, PowerConfig(initial_soc=0.5, battery_capacity_wh=10.0))
+    # Long eclipse + heavy load
+    bank.step(np.array([0.0, 0.0]), np.array([500.0, 500.0]), dt_s=10_000.0)
+    assert np.all(bank.soc >= 0.0)
+    assert np.all(bank.soc <= 1.0)
+    assert float(bank.soc.min()) == 0.0
+    # Long sunlight + tiny load
+    bank.soc[:] = 0.9
+    bank.step(np.array([1.0, 1.0]), np.array([1.0, 1.0]), dt_s=50_000.0)
+    assert np.all(bank.soc >= 0.0)
+    assert np.all(bank.soc <= 1.0)
+    assert float(bank.soc.max()) == 1.0
+
+
+def test_saa_flux_peaks_over_south_atlantic() -> None:
+    rad = SAARadiation()
+    epoch = datetime(2026, 9, 6, tzinfo=timezone.utc)
+    # Rough ECEF points at 550 km: SAA vs mid-Pacific
+    r_e = 6_378_137.0 + 550_000.0
+
+    def ecef(lat_deg: float, lon_deg: float) -> np.ndarray:
+        lat, lon = np.deg2rad(lat_deg), np.deg2rad(lon_deg)
+        return r_e * np.array(
+            [np.cos(lat) * np.cos(lon), np.cos(lat) * np.sin(lon), np.sin(lat)]
+        )
+
+    saa = rad.proton_flux_cm2_s(ecef(-25.0, -50.0), epoch)[0]
+    pac = rad.proton_flux_cm2_s(ecef(0.0, -160.0), epoch)[0]
+    assert saa > 10.0 * pac
+
+
+def test_thermal_stays_physical() -> None:
+    th = ThermalState(1)
+    th.step(np.array([1.0]), np.array([200.0]), dt_s=60.0)
+    assert 150.0 <= float(th.temp_k[0]) <= 400.0

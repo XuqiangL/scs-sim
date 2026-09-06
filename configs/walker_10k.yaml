@@ -27,6 +27,8 @@ demo:
   topology_steps: 4
   topology_output: out/topology_demo.json
   eclipse_columns: true
+  environment_output: out/environment_demo.csv
+  compute_output: out/compute_schedule.csv
 
 isl:
   pattern: plus_grid
@@ -53,6 +55,33 @@ environment:
   eclipse: true
   atmosphere: exponential
   apply_drag: false
+
+power:
+  panel_area_m2: 8.0
+  panel_efficiency: 0.28
+  battery_capacity_wh: 200.0
+  initial_soc: 0.75
+  platform_idle_w: 50.0
+
+thermal:
+  mass_kg: 300.0
+  initial_temp_k: 290.0
+
+radiation:
+  model: saa_heuristic
+  peak_flux_cm2_s: 2000.0
+
+compute:
+  enabled: true
+  flops: 2.0e13
+  idle_w: 90.0
+  busy_w: 450.0
+  min_soc: 0.12
+  jobs:
+    - {id: infer-a, flops: 4.0e14}
+    - {id: infer-b, flops: 4.0e14}
+    - {id: down-london, flops: 5.0e14, dest_gs: london}
+    - {id: train-a, flops: 8.0e14}
 
 shells:
   # Classic Starlink Gen1-density mid-inclination shells (72 x 22 = 1584)

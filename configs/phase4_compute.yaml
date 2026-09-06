@@ -1,0 +1,98 @@
+# Phase 4 compute-constellation demo: compact Walker + jobs + GS downlink.
+# 6 × 8 = 48 sats keeps +Grid and the scheduler fast on Windows.
+
+name: phase4_compute
+description: >
+  Onboard GPU/NPU scheduling over a small Walker-delta with power, thermal,
+  SAA dose, and ISL/GSL reachability. Jobs without dest_gs can run anywhere;
+  dest_gs jobs need a path to that gateway in the snapshot.
+
+epoch: "2026-09-06T00:00:00Z"
+propagator: kepler_j2
+
+earth:
+  model: wgs84
+
+demo:
+  steps: 24
+  dt_seconds: 60
+  subsample: first_shell
+  max_sats: 48
+  output: out/ephemeris_demo.csv
+  network: true
+  topology_steps: 8
+  topology_output: out/topology_demo.json
+  eclipse_columns: true
+  environment_output: out/environment_demo.csv
+  compute_output: out/compute_schedule.csv
+
+isl:
+  pattern: plus_grid
+  max_range_km: 5500
+  earth_occlusion: true
+  fill_geometric: true
+  max_degree: 4
+
+gsl:
+  min_elevation_deg: 20
+  max_attach: 3
+
+ground_stations:
+  - {id: london, lat_deg: 51.5074, lon_deg: -0.1278, alt_km: 0.05}
+  - {id: singapore, lat_deg: 1.3521, lon_deg: 103.8198, alt_km: 0.03}
+  - {id: sao_paulo, lat_deg: -23.5558, lon_deg: -46.6396, alt_km: 0.76}
+  - {id: frankfurt, lat_deg: 50.1109, lon_deg: 8.6821, alt_km: 0.11}
+
+power:
+  panel_area_m2: 8.0
+  panel_efficiency: 0.28
+  solar_constant_w_m2: 1361.0
+  battery_capacity_wh: 180.0
+  initial_soc: 0.80
+  charge_efficiency: 0.95
+  platform_idle_w: 45.0
+  max_charge_w: 600.0
+
+thermal:
+  mass_kg: 280.0
+  cp_j_kg_k: 900.0
+  area_m2: 6.0
+  absorptivity: 0.65
+  emissivity: 0.80
+  initial_temp_k: 288.0
+
+radiation:
+  model: saa_heuristic
+  peak_flux_cm2_s: 2000.0
+
+environment:
+  eclipse: true
+  atmosphere: exponential
+  apply_drag: false
+
+compute:
+  enabled: true
+  flops: 2.0e13
+  memory_gib: 32
+  idle_w: 90.0
+  busy_w: 450.0
+  min_soc: 0.12
+  jobs:
+    - {id: infer-01, flops: 4.0e14}
+    - {id: infer-02, flops: 4.0e14}
+    - {id: infer-03, flops: 6.0e14}
+    - {id: infer-04, flops: 3.0e14}
+    - {id: down-london, flops: 5.0e14, dest_gs: london}
+    - {id: down-frankfurt, flops: 5.0e14, dest_gs: frankfurt}
+    - {id: down-singapore, flops: 8.0e14, dest_gs: singapore}
+    - {id: train-01, flops: 1.2e15}
+    - {id: train-02, flops: 1.0e15}
+    - {id: batch-01, flops: 2.0e14}
+
+shells:
+  - id: cmp_550_53
+    altitude_km: 550.0
+    inclination_deg: 53.0
+    n_planes: 6
+    n_sats_per_plane: 8
+    phasing_f: 1

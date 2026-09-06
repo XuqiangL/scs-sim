@@ -1,6 +1,40 @@
 # Progress log
 
-Claimed product completion at end of this log: **~32%** (Phase 1 + Phase 2 + Phase 3 minimal).
+Claimed product completion at end of this log: **~50%** (Phases 1–3 done + Phase 4 core).
+
+## 2026-09-06 — Phase 3 finish + Phase 4 onboard compute (~50%)
+
+Continued on `main`. Quota still open — shipped power/thermal/radiation and the compute constellation core.
+
+**Phase 3 remaining (done):**
+
+- Solar + battery SoC with eclipse drain; SoC clipped to [0, 1].
+- Lumped Stefan–Boltzmann temperature per sat.
+- SAA lat/lon heuristic + dose accumulator (NullRadiation replaced as default).
+- `out/environment_demo.csv`; demo prints mean SoC, % eclipse, mean T.
+- Tests: eclipse flag consistency, SoC bounds, SAA peak, thermal range.
+
+**Phase 4 (core, done):**
+
+- `ComputeNode` / `ComputeFleet`: FLOPs, memory, idle/busy watts.
+- `Job` with optional `dest_gs`.
+- `GreedyEclipseScheduler`: sunlight now + next step, SoC, dest-GS reachability; never assigns SoC < `min_soc`.
+- Topology integration via `reachable_gateways`.
+- `out/compute_schedule.csv` + completed / delayed / energy summary.
+- `configs/phase4_compute.yaml` (6×8 = 48) and Windows `scripts/run_phase4.bat` / `.ps1`.
+- Tests: idle < busy; empty battery skipped; sunny job completes.
+
+**Still not built:** Cesium, ops/MSI, Orekit, full multi-resource packer.
+
+```
+Phase 1 ██████████  done
+Phase 2 ██████████  done
+Phase 3 ██████████  done   power / thermal / SAA
+Phase 4 ████████░░  ~90%   greedy look-ahead core
+Phase 5 ░░░░░░░░░░  0%     Cesium
+Phase 6 ░░░░░░░░░░  0%     ops
+Product ████████████████████  50%
+```
 
 ## 2026-09-06 — Phase 2 network + Phase 3 stubs→minimal physics (~32%)
 
