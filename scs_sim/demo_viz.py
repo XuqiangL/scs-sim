@@ -63,7 +63,7 @@ def run_viz_demo(
     cfg: SimConfig = load_config(config_path)
     elements = generate_constellation(cfg, max_sats=max_sats)
     n_sats = len(elements)
-    atm = make_atmosphere(cfg.environment.atmosphere)
+    atm = make_atmosphere(cfg.environment.atmosphere, rho_scale=cfg.environment.atmosphere_scale)
     prop = make_propagator(
         cfg.propagator,
         atmosphere=atm,

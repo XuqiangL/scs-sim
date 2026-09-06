@@ -85,6 +85,7 @@ class EnvironmentConfig:
     cd: float = 2.2
     area_m2: float = 4.0
     mass_kg: float = 300.0
+    atmosphere_scale: float = 1.0  # multiplies exponential ρ_ref (UI / runtime)
 
 
 @dataclass(frozen=True)
@@ -262,6 +263,8 @@ class SimConfig:
             raise ValueError("compute.busy_w must be >= idle_w")
         if not (0.0 <= self.power.initial_soc <= 1.0):
             raise ValueError("power.initial_soc must be in [0, 1]")
+        if self.environment.atmosphere_scale < 0.0:
+            raise ValueError("environment.atmosphere_scale must be >= 0")
 
 
 def _parse_epoch(value: str | datetime) -> datetime:
@@ -357,6 +360,7 @@ def load_config(path: str | Path) -> SimConfig:
         cd=float(env_raw.get("cd", 2.2)),
         area_m2=float(env_raw.get("area_m2", 4.0)),
         mass_kg=float(env_raw.get("mass_kg", 300.0)),
+        atmosphere_scale=float(env_raw.get("atmosphere_scale", 1.0)),
     )
     pwr_raw = raw.get("power") or {}
     power = PowerConfig(

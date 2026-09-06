@@ -26,7 +26,22 @@ def test_openapi_schema_lists_ops_paths(client: TestClient) -> None:
     assert r.status_code == 200
     spec = r.json()
     paths = spec.get("paths") or {}
-    for p in ("/docs", "/health", "/config/load", "/sim/step", "/sats", "/jobs", "/kpi", "/twin/compare"):
+    for p in (
+        "/docs",
+        "/health",
+        "/config/load",
+        "/sim/step",
+        "/sats",
+        "/jobs",
+        "/kpi",
+        "/twin/compare",
+        "/ui",
+        "/control",
+        "/control/state",
+        "/control/fleet",
+        "/kpi/export",
+        "/config/reload",
+    ):
         if p == "/docs":
             docs = client.get("/docs")
             assert docs.status_code == 200

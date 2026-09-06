@@ -48,6 +48,9 @@ class ComputeFleet:
         self.memory_bytes = int(node.memory_bytes)
         self.idle_w = float(node.idle_w)
         self.busy_w = float(node.busy_w)
+        self.idle_w_sat = np.full(n, self.idle_w, dtype=float)
+        self.busy_w_sat = np.full(n, self.busy_w, dtype=float)
+        self.power_draw_w = np.full(n, np.nan, dtype=float)
         self.busy = np.zeros(n, dtype=bool)
         self.remaining_flops = np.zeros(n, dtype=float)
         self.job_id: list[str | None] = [None] * n
@@ -57,7 +60,8 @@ class ComputeFleet:
         return int(self.sat_id.shape[0])
 
     def load_w(self) -> np.ndarray:
-        return np.where(self.busy, self.busy_w, self.idle_w)
+        base = np.where(self.busy, self.busy_w_sat, self.idle_w_sat)
+        return np.where(np.isfinite(self.power_draw_w), self.power_draw_w, base)
 
     def assign(self, sat_id: str, job_id: str, flops: float) -> None:
         i = self.index[sat_id]

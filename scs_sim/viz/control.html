@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>SCS-Sim Control · 星座控制台</title>
+<style>
+  :root {
+    --bg: #0b0e12;
+    --panel: #141a22;
+    --panel-2: #1a222c;
+    --line: #2a3544;
+    --text: #e8eef4;
+    --muted: #8b9aab;
+    --accent: #3dd6c6;
+    --amber: #f0b429;
+    --warn: #ff8a5b;
+    --ok: #7dffa0;
+    --input: #0f141b;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", "Noto Sans SC", "PingFang SC", sans-serif; }
+  header {
+    display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+    gap: 12px; padding: 18px 22px 10px; border-bottom: 1px solid var(--line);
+  }
+  h1 { margin: 0; font-size: 1.2rem; letter-spacing: 0.04em; font-weight: 650; }
+  h1 span { color: var(--accent); font-weight: 500; }
+  .sub { color: var(--muted); font-size: 0.86rem; margin-top: 4px; }
+  .status {
+    display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 22px;
+  }
+  .pill {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 12px; font-size: 0.8rem; color: var(--muted);
+  }
+  .pill b { color: var(--accent); font-weight: 650; }
+  main {
+    display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 14px;
+    padding: 0 22px 22px;
+  }
+  @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+  section.card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 14px 16px 16px;
+  }
+  h2 { margin: 0 0 10px; font-size: 0.95rem; color: #d5e2ee; }
+  h2 small { color: var(--muted); font-weight: 400; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+  label { display: block; font-size: 0.74rem; color: var(--muted); margin-bottom: 4px; }
+  label em { font-style: normal; color: #c9d6e2; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  input[type=number], input[type=search], select {
+    width: 100%; background: var(--input); color: var(--text);
+    border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 0.88rem;
+  }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .val { min-width: 4.5rem; text-align: right; color: var(--amber); font-variant-numeric: tabular-nums; font-size: 0.82rem; }
+  .toggle { display: flex; align-items: center; gap: 8px; min-height: 42px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  button {
+    background: #1d2a33; color: var(--text); border: 1px solid #355064;
+    border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 0.84rem;
+  }
+  button.primary { background: #134e4a; border-color: #2dd4bf; color: #ecfeff; }
+  button.amber { background: #3d2e10; border-color: var(--amber); color: #ffe8a3; }
+  button.warn { background: #3a1d14; border-color: var(--warn); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  button:hover:not(:disabled) { filter: brightness(1.12); }
+  .map {
+    height: 220px; background: #0a1016; border: 1px solid var(--line); border-radius: 8px;
+    width: 100%;
+  }
+  .readouts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
+  .metric { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .metric b { display: block; color: var(--accent); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+  .metric span { color: var(--muted); font-size: 0.74rem; }
+  .log {
+    margin: 0 22px 22px; background: #0a1016; border: 1px solid var(--line);
+    border-radius: 8px; padding: 10px 12px; font-family: ui-monospace, Consolas, monospace;
+    font-size: 0.75rem; color: #9fb0c0; max-height: 140px; overflow: auto; white-space: pre-wrap;
+  }
+  .err { color: var(--warn); }
+  .ok { color: var(--ok); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>SCS-Sim Control <span>/ 星座控制台</span></h1>
+    <div class="sub">Live session · mutations hit the running engine, not only YAML · 运行时改物理参数</div>
+  </div>
+  <div class="sub" id="hint">OpenAPI: <a href="/docs" style="color:#7cb7ff">/docs</a> · UI: /ui · /control</div>
+</header>
+<div class="status" id="status"></div>
+<main>
+  <section class="card" id="fleet-panel">
+    <h2>Fleet 星座级 <small>whole constellation</small></h2>
+    <div class="grid" id="fleet-fields"></div>
+    <div class="actions">
+      <button class="primary" id="btn-apply-fleet">Apply fleet · 应用星座</button>
+      <button id="btn-step">Step once · 单步</button>
+      <button class="amber" id="btn-run">Run N steps · 运行 N 步</button>
+      <input id="n-steps" type="number" min="1" max="200" value="4" style="width:72px"/>
+      <button id="btn-reload">Reload YAML · 重载配置</button>
+      <button id="btn-kpi">Export KPI JSON</button>
+    </div>
+  </section>
+  <section class="card" id="sat-panel">
+    <h2>Satellite 单星 <small>per-sat override</small></h2>
+    <label><em>sat_id</em> 选择 / 搜索</label>
+    <div class="row" style="margin-bottom:10px">
+      <input type="search" id="sat-search" placeholder="filter sat_id…"/>
+      <select id="sat-pick"></select>
+    </div>
+    <div class="grid" id="sat-fields"></div>
+    <div class="actions">
+      <button class="primary" id="btn-apply-sat">Apply sat · 应用单星</button>
+      <button class="warn" id="btn-reset-sat">Reset sat · 复位</button>
+    </div>
+    <canvas class="map" id="map" width="720" height="220"></canvas>
+    <div class="readouts" id="sat-readouts"></div>
+  </section>
+</main>
+<div class="log" id="log">ready.</div>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const logEl = $("log");
+  let state = { loaded: false, sats: [], fleet: {}, selected: null };
+  let pick = "";
+
+  function log(msg, cls) {
+    const t = new Date().toISOString().slice(11, 19);
+    logEl.innerHTML = `<span class="${cls || ""}">[${t}] ${msg}</span>\n` + logEl.innerHTML;
+  }
+  async function api(path, opts) {
+    const r = await fetch(path, Object.assign({ headers: { "Content-Type": "application/json" } }, opts || {}));
+    const text = await r.text();
+    let body;
+    try { body = JSON.parse(text); } catch { body = { detail: text }; }
+    if (!r.ok) throw new Error((body.detail && (body.detail.msg || body.detail)) || r.statusText);
+    return body;
+  }
+  function num(id, fallback) {
+    const el = $(id);
+    if (!el) return fallback;
+    const v = parseFloat(el.value);
+    return Number.isFinite(v) ? v : fallback;
+  }
+  function bool(id) { return $(id).checked; }
+
+  const fleetSpec = [
+    ["dt_seconds", "dt (s) 步长", 1, 300, 1],
+    ["isl_max_range_km", "ISL max range 星间最大距离 km", 200, 12000, 50],
+    ["gsl_min_elevation_deg", "GSL min elev 最低仰角 °", 0, 60, 1],
+    ["solar_w", "Solar power 太阳能峰值 W", 200, 8000, 50],
+    ["battery_capacity_wh", "Battery 电池容量 Wh", 20, 800, 5],
+    ["atmosphere_scale", "Atmosphere scale 大气密度倍率", 0, 10, 0.1],
+    ["compute_flops", "Compute FLOPs 算力", 1e12, 1e14, 1e12],
+    ["idle_w", "Idle watts 空闲功耗", 10, 400, 5],
+    ["busy_w", "Busy watts 忙碌功耗", 50, 1200, 10],
+  ];
+  const toggles = [
+    ["apply_drag", "Drag 大气阻力"],
+    ["eclipse", "Eclipse model 地影"],
+  ];
+  const satSpec = [
+    ["a_km", "a 半长轴 km", 6500, 8000, 1],
+    ["e", "e 偏心率", 0, 0.05, 0.001],
+    ["i_deg", "i 倾角 °", 0, 180, 0.1],
+    ["raan_deg", "RAAN 升交点赤经 °", 0, 360, 0.1],
+    ["soc", "SoC 荷电状态", 0, 1, 0.01],
+    ["power_draw_w", "Power draw 功耗 W", 0, 800, 5],
+    ["flops", "Compute capacity 单星算力", 1e12, 1e14, 1e12],
+  ];
+
+  function slider(id, label, min, max, step, value) {
+    return `<div><label><em>${label}</em></label>
+      <div class="row">
+        <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}"/>
+        <input class="val" id="${id}-n" type="number" min="${min}" max="${max}" step="${step}" value="${value}"/>
+      </div></div>`;
+  }
+  function bindPair(id) {
+    const a = $(id), b = $(id + "-n");
+    if (!a || !b) return;
+    const sync = (src, dst) => () => { dst.value = src.value; };
+    a.addEventListener("input", sync(a, b));
+    b.addEventListener("input", sync(b, a));
+  }
+
+  function renderFleet(p) {
+    const host = $("fleet-fields");
+    host.innerHTML = fleetSpec.map(([k, lab, min, max, step]) =>
+      slider("f-" + k, lab, min, max, step, p[k] ?? min)
+    ).join("") + toggles.map(([k, lab]) =>
+      `<div class="toggle"><input type="checkbox" id="f-${k}" ${p[k] ? "checked" : ""}/>
+       <label for="f-${k}" style="margin:0"><em>${lab}</em></label></div>`
+    ).join("");
+    fleetSpec.forEach(([k]) => bindPair("f-" + k));
+  }
+
+  function renderSatFields(sat) {
+    const host = $("sat-fields");
+    const src = sat || {};
+    host.innerHTML = satSpec.map(([k, lab, min, max, step]) =>
+      slider("s-" + k, lab, min, max, step, src[k] ?? min)
+    ).join("") + `<div><label><em>Operational state 状态</em></label>
+      <select id="s-state">${(state.states || ["operational"]).map(s =>
+        `<option value="${s}" ${src.state === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>`;
+    satSpec.forEach(([k]) => bindPair("s-" + k));
+  }
+
+  function pills() {
+    const st = state;
+    const live = st.fleet_live || {};
+    const bits = [
+      ["loaded", st.loaded ? "yes" : "no"],
+      ["config", st.config || "—"],
+      ["step", st.step ?? "—"],
+      ["t_utc", st.t_utc || "—"],
+      ["n_sats", st.n_sats ?? "—"],
+      ["mean SoC 平均荷电", live.mean_soc == null ? "—" : live.mean_soc.toFixed(3)],
+      ["eclipse % 地影占比", live.eclipse_pct == null ? "—" : live.eclipse_pct.toFixed(1) + "%"],
+      ["mean T 平均温度", live.mean_temp_k == null ? "—" : live.mean_temp_k.toFixed(1) + " K"],
+      ["ISL edges", live.n_isl ?? 0],
+    ];
+    $("status").innerHTML = bits.map(([k, v]) => `<div class="pill">${k}: <b>${v}</b></div>`).join("");
+  }
+
+  function populatePick() {
+    const q = ($("sat-search").value || "").toLowerCase();
+    const sats = (state.sats || []).filter(s => s.sat_id.toLowerCase().includes(q));
+    const sel = $("sat-pick");
+    const prev = pick || (sats[0] && sats[0].sat_id);
+    sel.innerHTML = sats.map(s => `<option value="${s.sat_id}">${s.sat_id}  SoC ${s.soc.toFixed(2)}  ${s.state}</option>`).join("");
+    if (prev && sats.some(s => s.sat_id === prev)) sel.value = prev;
+    pick = sel.value;
+  }
+
+  function selectedSat() {
+    return (state.sats || []).find(s => s.sat_id === pick) || null;
+  }
+
+  function readouts(sat) {
+    const host = $("sat-readouts");
+    if (!sat) { host.innerHTML = ""; return; }
+    const cells = [
+      ["Position 位置", `${sat.lat_deg.toFixed(2)}°, ${sat.lon_deg.toFixed(2)}°  ${sat.alt_km.toFixed(1)} km`],
+      ["SoC", sat.soc.toFixed(3)],
+      ["Eclipse 地影", sat.in_eclipse ? "YES / 阴影" : "sun / 日照"],
+      ["Temp 温度", sat.temp_k.toFixed(1) + " K"],
+      ["ISL degree 度数", sat.isl_degree],
+      ["Sunlight 日照比", sat.sunlight.toFixed(2)],
+    ];
+    host.innerHTML = cells.map(([k, v]) => `<div class="metric"><b>${v}</b><span>${k}</span></div>`).join("");
+  }
+
+  function drawMap() {
+    const c = $("map");
+    const ctx = c.getContext("2d");
+    const w = c.width, h = c.height;
+    ctx.fillStyle = "#0a1016";
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = "#243040";
+    ctx.lineWidth = 1;
+    for (let i = 1; i < 6; i++) {
+      ctx.beginPath(); ctx.moveTo(0, i * h / 6); ctx.lineTo(w, i * h / 6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(i * w / 6, 0); ctx.lineTo(i * w / 6, h); ctx.stroke();
+    }
+    (state.sats || []).forEach(s => {
+      const x = (s.lon_deg + 180) / 360 * w;
+      const y = (90 - s.lat_deg) / 180 * h;
+      ctx.fillStyle = s.sat_id === pick ? "#f0b429" : (s.in_eclipse ? "#5b6b7c" : "#3dd6c6");
+      ctx.beginPath();
+      ctx.arc(x, y, s.sat_id === pick ? 5 : 2.4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  function applyState(next, refreshFields) {
+    state = next;
+    pills();
+    populatePick();
+    const sat = selectedSat();
+    if (refreshFields) {
+      renderFleet(state.fleet || {});
+      renderSatFields(sat);
+    }
+    readouts(sat);
+    drawMap();
+  }
+
+  async function refresh(refreshFields) {
+    let st = await api("/control/state" + (pick ? "?sat_id=" + encodeURIComponent(pick) : ""));
+    if (!st.loaded) {
+      log("no session — loading configs/phase6_viz.yaml", "");
+      st = await api("/config/load", { method: "POST", body: JSON.stringify({ path: "configs/phase6_viz.yaml" }) });
+      st = await api("/control/state");
+    }
+    applyState(st, refreshFields);
+  }
+
+  $("sat-pick").addEventListener("change", () => {
+    pick = $("sat-pick").value;
+    const sat = selectedSat();
+    renderSatFields(sat);
+    readouts(sat);
+    drawMap();
+  });
+  $("sat-search").addEventListener("input", populatePick);
+
+  $("btn-apply-fleet").onclick = async () => {
+    const body = {};
+    fleetSpec.forEach(([k]) => { body[k] = num("f-" + k); });
+    toggles.forEach(([k]) => { body[k] = bool("f-" + k); });
+    try {
+      const st = await api("/control/fleet", { method: "POST", body: JSON.stringify(body) });
+      applyState(st, false);
+      log("fleet overrides applied · 星座参数已写入运行态", "ok");
+    } catch (e) { log(e.message, "err"); }
+  };
+  $("btn-apply-sat").onclick = async () => {
+    if (!pick) return;
+    const body = { state: $("s-state").value };
+    satSpec.forEach(([k]) => { body[k] = num("s-" + k); });
+    try {
+      const st = await api("/control/sat/" + encodeURIComponent(pick), { method: "POST", body: JSON.stringify(body) });
+      applyState(st, false);
+      log("sat " + pick + " overridden · 单星覆盖已生效", "ok");
+    } catch (e) { log(e.message, "err"); }
+  };
+  $("btn-reset-sat").onclick = async () => {
+    if (!pick) return;
+    try {
+      const st = await api("/control/sat/" + encodeURIComponent(pick) + "/reset", { method: "POST" });
+      applyState(st, true);
+      log("sat " + pick + " reset to baseline · 已复位", "ok");
+    } catch (e) { log(e.message, "err"); }
+  };
+  $("btn-step").onclick = async () => {
+    try {
+      await api("/sim/step", { method: "POST", body: JSON.stringify({ n: 1 }) });
+      await refresh(false);
+      log("step +1", "ok");
+    } catch (e) { log(e.message, "err"); }
+  };
+  $("btn-run").onclick = async () => {
+    const n = Math.max(1, Math.min(200, parseInt($("n-steps").value || "4", 10)));
+    try {
+      await api("/sim/step", { method: "POST", body: JSON.stringify({ n }) });
+      await refresh(false);
+      log("ran " + n + " steps · 已推进", "ok");
+    } catch (e) { log(e.message, "err"); }
+  };
+  $("btn-reload").onclick = async () => {
+    try {
+      await api("/config/reload", { method: "POST" });
+      pick = "";
+      await refresh(true);
+      log("YAML reloaded · 配置已重载，覆盖清空", "ok");
+    } catch (e) { log(e.message, "err"); }
+  };
+  $("btn-kpi").onclick = async () => {
+    try {
+      const r = await api("/kpi/export", { method: "POST", body: JSON.stringify({}) });
+      log("KPI wrote " + r.wrote, "ok");
+    } catch (e) { log(e.message, "err"); }
+  };
+
+  refresh(true).then(() => log("control UI connected · 控制台已连接", "ok"))
+    .catch((e) => log(e.message, "err"));
+})();
+</script>
+</body>
+</html>

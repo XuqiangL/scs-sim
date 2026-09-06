@@ -35,7 +35,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[scs-sim] preloaded {args.config}  n={session.status().get('n_sats')}")
 
     app = create_app(session)
-    print(f"[scs-sim] ops API  http://{args.host}:{args.port}/docs  (CORS open, no auth)")
+    print(f"[scs-sim] ops API  http://{args.host}:{args.port}/ui   (control panel)")
+    print(f"[scs-sim] OpenAPI  http://{args.host}:{args.port}/docs  (CORS open, no auth)")
     uvicorn.run(app, host=args.host, port=int(args.port), log_level="info")
     return 0
 

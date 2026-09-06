@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scs-sim"
-version = "0.8.0"
+version = "0.8.1"
 description = "Industrial-grade Starlink-like compute constellation simulator (catalog + 10k bench)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -37,6 +37,9 @@ Documentation = "docs/ARCHITECTURE.md"
 
 [tool.setuptools.packages.find]
 include = ["scs_sim*"]
+
+[tool.setuptools.package-data]
+scs_sim = ["viz/*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

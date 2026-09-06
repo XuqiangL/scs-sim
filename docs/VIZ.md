@@ -31,6 +31,15 @@ py -3 -m scs_sim.demo --viz
 ```
 
 Open `out\viz_globe.html` in a browser. Offline, the 2D tracks still render.
+
+That HTML is a **static replay**. To change dt, ISL range, SoC, or a single
+sat's elements while the sim is running, use the control panel:
+
+```bat
+scripts\run_ui.bat
+```
+
+`http://127.0.0.1:18765/ui` — see [CONTROL.md](CONTROL.md).
 Online, CesiumJS loads from the CDN and plays the embedded CZML. No Ion key.
 
 ## Drop CZML into Cesium

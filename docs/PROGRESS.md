@@ -1,6 +1,14 @@
 # Progress log
 
-Claimed product completion at end of this log: **~97%** (Phases 1–8: catalog align + 10k bench + acceptance).
+Claimed product completion at end of this log: **~98%** (Phases 1–8 + live `/ui` control panel).
+
+## 2026-09-06 — Live control UI (fleet + per-sat) (~98%)
+
+`/ui` / `/control` panel on the running FastAPI session. Fleet sliders and per-sat
+overrides mutate in-memory physics (not YAML-only). Persists `out/overrides.json`.
+`scripts/run_ui.bat`. Tests: `tests/test_control_api.py`.
+
+**Still out of scope:** signed MSI, production auth, live Orekit, paid Cesium.
 
 ## 2026-09-06 — Catalog TLE align, 10k bench, acceptance (~97%)
 

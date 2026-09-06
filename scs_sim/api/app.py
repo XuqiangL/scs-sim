@@ -5,8 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from fastapi.responses import FileResponse
+
 from scs_sim import __completion_pct__, __phase__, __version__
 from scs_sim.api.session import SimSession
+
+_CONTROL_HTML = Path(__file__).resolve().parent.parent / "viz" / "control.html"
 from scs_sim.twin.compare import compare_to_propagator, compare_tables, write_twin_compare
 from scs_sim.twin.io import load_telemetry_csv
 
@@ -47,6 +51,35 @@ class TwinBody(BaseModel):
     output: str = "out/twin_compare.json"
 
 
+class FleetPatch(BaseModel):
+    dt_seconds: float | None = Field(None, gt=0, le=3600)
+    isl_max_range_km: float | None = Field(None, gt=0, le=20000)
+    gsl_min_elevation_deg: float | None = Field(None, ge=-5, le=90)
+    solar_w: float | None = Field(None, ge=0, le=50000)
+    battery_capacity_wh: float | None = Field(None, gt=0, le=50000)
+    apply_drag: bool | None = None
+    atmosphere_scale: float | None = Field(None, ge=0, le=100)
+    eclipse: bool | None = None
+    compute_flops: float | None = Field(None, gt=0)
+    idle_w: float | None = Field(None, ge=0, le=20000)
+    busy_w: float | None = Field(None, ge=0, le=20000)
+
+
+class SatPatch(BaseModel):
+    a_km: float | None = Field(None, gt=6378.0, le=50000)
+    e: float | None = Field(None, ge=0, lt=1)
+    i_deg: float | None = Field(None, ge=0, le=180)
+    raan_deg: float | None = Field(None, ge=-360, le=360)
+    soc: float | None = Field(None, ge=0, le=1)
+    power_draw_w: float | None = Field(None, ge=0, le=20000)
+    flops: float | None = Field(None, gt=0)
+    state: str | None = None
+
+
+class ExportBody(BaseModel):
+    path: str | None = None
+
+
 def create_app(session: SimSession | None = None) -> Any:
     sess = session or SimSession()
     app = FastAPI(
@@ -73,10 +106,25 @@ def create_app(session: SimSession | None = None) -> Any:
         return {
             "name": "SCS-Sim Ops API",
             "docs": "/docs",
+            "ui": "/ui",
+            "control": "/control",
             "health": "/health",
             "version": __version__,
             "completion_pct": __completion_pct__,
         }
+
+    def _ui_page() -> Any:
+        if not _CONTROL_HTML.is_file():
+            _http(FileNotFoundError(f"control UI missing: {_CONTROL_HTML}"), 500)
+        return FileResponse(_CONTROL_HTML, media_type="text/html; charset=utf-8")
+
+    @app.get("/ui", include_in_schema=True)
+    def ui() -> Any:
+        return _ui_page()
+
+    @app.get("/control", include_in_schema=True)
+    def control_page() -> Any:
+        return _ui_page()
 
     @app.get("/health")
     def health() -> dict[str, Any]:
@@ -216,6 +264,68 @@ def create_app(session: SimSession | None = None) -> Any:
         write_twin_compare(body.output, report)
         report["wrote"] = body.output
         return report
+
+    @app.get("/control/state")
+    def control_state(sat_id: str | None = None) -> dict[str, Any]:
+        try:
+            return sess.control_state(sat_id=sat_id)
+        except KeyError as exc:
+            _http(exc, 404)
+        except RuntimeError as exc:
+            _http(exc, 409)
+        return {}
+
+    @app.post("/control/fleet")
+    def control_fleet(body: FleetPatch) -> dict[str, Any]:
+        try:
+            return sess.apply_fleet(body.model_dump(exclude_unset=True))
+        except RuntimeError as exc:
+            _http(exc, 409)
+        except ValueError as exc:
+            _http(exc, 400)
+        return {}
+
+    @app.post("/control/sat/{sat_id}")
+    def control_sat(sat_id: str, body: SatPatch) -> dict[str, Any]:
+        try:
+            return sess.apply_sat(sat_id, body.model_dump(exclude_unset=True))
+        except KeyError as exc:
+            _http(exc, 404)
+        except RuntimeError as exc:
+            _http(exc, 409)
+        except ValueError as exc:
+            _http(exc, 400)
+        return {}
+
+    @app.post("/control/sat/{sat_id}/reset")
+    def control_sat_reset(sat_id: str) -> dict[str, Any]:
+        try:
+            return sess.reset_sat(sat_id)
+        except KeyError as exc:
+            _http(exc, 404)
+        except RuntimeError as exc:
+            _http(exc, 409)
+        return {}
+
+    @app.post("/config/reload")
+    def reload_cfg() -> dict[str, Any]:
+        try:
+            return sess.reload()
+        except FileNotFoundError as exc:
+            _http(exc, 404)
+        except RuntimeError as exc:
+            _http(exc, 409)
+        except Exception as exc:
+            _http(exc, 400)
+        return {}
+
+    @app.post("/kpi/export")
+    def export_kpi(body: ExportBody | None = None) -> dict[str, Any]:
+        try:
+            return sess.export_kpi(None if body is None else body.path)
+        except RuntimeError as exc:
+            _http(exc, 409)
+        return {}
 
     app.state.session = sess
     return app

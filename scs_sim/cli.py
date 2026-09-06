@@ -11,6 +11,7 @@ _USAGE = """SCS-Sim commands (Windows: scs-sim.cmd <cmd>):
   viz     Phase 6 CZML / KPI           python -m scs_sim.demo_viz
   ops     Phase 5 insertion            python -m scs_sim.demo_ops
   api     Phase 7 local REST           python -m scs_sim.api
+  ui      Control panel /ui            python -m scs_sim.api
   twin    Phase 7 CSV compare          python -m scs_sim.twin
   catalog TLE align (opt-in fetch)     python -m scs_sim.catalog
   bench   10k timing hooks             python -m scs_sim.bench
@@ -21,6 +22,7 @@ _MODULES = {
     "viz": "scs_sim.demo_viz",
     "ops": "scs_sim.demo_ops",
     "api": "scs_sim.api",
+    "ui": "scs_sim.api",
     "twin": "scs_sim.twin",
     "catalog": "scs_sim.catalog",
     "bench": "scs_sim.bench",

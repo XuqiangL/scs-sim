@@ -6,6 +6,9 @@ it. There is **no auth and no TLS** — bind to `127.0.0.1` only.
 
 OpenAPI UI: `http://127.0.0.1:18765/docs` (FastAPI default).
 
+Interactive control panel: `http://127.0.0.1:18765/ui` (alias `/control`).
+Mutations hit the running session. See [CONTROL.md](CONTROL.md).
+
 ## Install and run (Windows)
 
 ```bat
@@ -35,6 +38,13 @@ scs-sim.cmd api --config configs\phase6_viz.yaml
 | GET | `/jobs` | Queued / running compute jobs |
 | POST | `/jobs` | `{job_id, flops, dest_gs?}` submit a job |
 | POST | `/twin/compare` | Telemetry CSV vs sim table or live propagator |
+| GET | `/ui` `/control` | Dark industrial control panel (HTML) |
+| GET | `/control/state` | Fleet sliders + per-sat live readouts |
+| POST | `/control/fleet` | Runtime fleet physics / network / compute |
+| POST | `/control/sat/{sat_id}` | Per-sat a, e, i, RAAN, SoC, watts, FLOPs, state |
+| POST | `/control/sat/{sat_id}/reset` | Restore that sat to last YAML baseline |
+| POST | `/config/reload` | Reload the last YAML (clears overrides) |
+| POST | `/kpi/export` | Rewrite KPI JSON (optional `path`) |
 
 `GET /kpi` falls back to `out/kpi_dashboard.json` if no session is loaded
 (e.g. after `python -m scs_sim.demo_viz`).

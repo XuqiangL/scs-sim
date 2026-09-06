@@ -105,10 +105,11 @@ class ExponentialAtmosphere:
         return (-0.5 * rho[:, None] * ballistic) * speed * v_rel
 
 
-def make_atmosphere(name: str) -> AtmospherePort:
+def make_atmosphere(name: str, rho_scale: float = 1.0) -> AtmospherePort:
     key = (name or "exponential").strip().lower()
+    scale = max(0.0, float(rho_scale))
     if key in {"null", "none", "off"}:
         return NullAtmosphere()
     if key in {"exponential", "exp"}:
-        return ExponentialAtmosphere()
+        return ExponentialAtmosphere(rho_ref_kg_m3=6.0e-13 * scale)
     raise ValueError(f"unknown atmosphere {name!r}")
