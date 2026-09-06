@@ -68,7 +68,7 @@ def test_retired_sats_excluded_from_isl() -> None:
     prop = KeplerJ2Propagator()
     r = prop.positions_eci_m(topo, 0.0)
     edges = PlusGridISL(
-        ISLConfig(max_range_km=8000.0, earth_occlusion=False, fill_geometric=False)
+        ISLConfig(max_range_km=20000.0, earth_occlusion=False, fill_geometric=True)
     ).links_at(topo, r)
     assert edges
 
@@ -82,7 +82,7 @@ def test_retired_sats_excluded_from_isl() -> None:
     assert retired_ids.isdisjoint(ids)
     r2 = prop.positions_eci_m(topo2, 0.0)
     edges2 = PlusGridISL(
-        ISLConfig(max_range_km=8000.0, earth_occlusion=False, fill_geometric=False)
+        ISLConfig(max_range_km=20000.0, earth_occlusion=False, fill_geometric=True)
     ).links_at(topo2, r2)
     involved = {e.a for e in edges2} | {e.b for e in edges2}
     assert retired_ids.isdisjoint(involved)

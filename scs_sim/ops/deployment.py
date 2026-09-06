@@ -110,10 +110,9 @@ class OpsFleet:
         launched: set[str] = set()
         for rec in self.records:
             prev = rec.state
+            if rec.arrived_at is None and rec.altitude_km(now) >= rec.operational_alt_km - 0.5:
+                rec.arrived_at = rec.launch + timedelta(seconds=rec.ramp_s)
             nxt = rec.desired_state(now, decomm_s)
-            if prev == "ascending" and nxt in {"commissioning", "operational"} and rec.arrived_at is None:
-                rec.arrived_at = now
-                nxt = rec.desired_state(now, decomm_s)
             if nxt != prev:
                 rec.state = nxt
                 events.append(
