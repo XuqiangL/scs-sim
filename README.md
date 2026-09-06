@@ -29,7 +29,11 @@ powershell -ExecutionPolicy Bypass -File scripts\install_windows.ps1
 ```bat
 py -3 -m pip install -e ".[dev,viz,api]"
 py -3 -m pytest
+py -3 -m pytest -m slow
+scripts\run_acceptance.bat
 ```
+
+Acceptance report: [docs/TEST_REPORT.md](docs/TEST_REPORT.md).
 
 ## Quickstart by phase
 
