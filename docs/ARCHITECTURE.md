@@ -2,9 +2,9 @@
 
 **Product:** industrial-grade Starlink-like **compute** constellation simulator  
 **Horizon:** fly ~10 000 satellites for orbital insertion, deployment, and operations  
-**Out of scope still:** signed Windows MSI, live Orekit/Java, production auth / K8s.
+**Out of scope still:** signed Windows MSI, live Orekit/Java, production auth / K8s, paid Cesium.
 
-**Claimed product progress: 91%** (Phases 1–7: viz + local ops API + twin + Orekit stub).
+**Claimed product progress: 97%** (Phases 1–8: catalog align + 10k bench + acceptance).
 
 ---
 
@@ -63,6 +63,12 @@ flowchart TB
         ORK["Orekit port stub"]
     end
 
+    subgraph P8["Phase 8 — GREEN — catalog + bench"]
+        CAT["CelesTrak opt-in + TLE align"]
+        BEN["10k generate / propagate bench"]
+        ACC["acceptance checklist"]
+    end
+
     CFG --> WAL --> ORB --> FRM
     CLK --> ORB
     FRM --> ISL --> TOP
@@ -92,6 +98,10 @@ flowchart TB
     LIF --> TWIN
     ORB --> ORK
     API --> WIN
+    TLE --> CAT
+    WAL --> BEN
+    CAT --> ACC
+    BEN --> ACC
 ```
 
 Hexagonal-ish rule: ports stay in each package. Phase 4 scheduler reads power / eclipse / topology without owning them.
@@ -125,15 +135,18 @@ Hexagonal-ish rule: ports stay in each package. Phase 4 scheduler reads power / 
 | `scs_sim/orbit/orekit_prop.py` | 7 | **stub** | 30% | Protocol + NotImplemented |
 | Windows venv / cmd | 7 | **green** | 85% | `install_windows.ps1`, `scs-sim.cmd` |
 | Signed MSI | 7 | **out of scope** | 0% | documented, not required |
+| `scs_sim/catalog/` | 8 | **green** | 90% | opt-in CelesTrak; fixture TLE; align JSON |
+| `scs_sim/bench.py` | 8 | **green** | 90% | 10k generate/propagate; ISL cap |
+| Acceptance | 8 | **green** | 95% | `docs/ACCEPTANCE.md` |
 
 ### Progress bar (product)
 
 ```
-████████████████████████████████████░░░░░░░░  91%
-Phase 1–6 done · Phase 7 API / twin / stub · no signed MSI
+███████████████████████████████████████░░░  97%
+Phase 1–8 · no signed MSI / live Orekit / paid Cesium
 ```
 
-**Claimed product progress: 91%.**
+**Claimed product progress: 97%.**
 
 ---
 
@@ -219,6 +232,19 @@ See [docs/VIZ.md](VIZ.md) and [docs/VALIDATION.md](VALIDATION.md).
 | Windows | `scripts/install_windows.ps1` + `scs-sim.cmd`. Signed MSI not shipped. Optional PyInstaller script. |
 
 See [docs/API.md](API.md) and [docs/WINDOWS.md](WINDOWS.md).
+
+---
+
+## Phase 8 — catalog alignment and 10k bench
+
+| Piece | Behavior |
+|-------|----------|
+| CelesTrak | `catalog.fetch` / `--fetch-tle` only; default is `tests/fixtures/starlink_sample.tle` |
+| Align | TLE → elements → SGP4 step vs primary Walker altitude/inc → `out/tle_align_report.json` |
+| Bench | `python -m scs_sim.bench --full`; ISL via `--isl-max-sats` (full N fill is not default) |
+| Acceptance | [docs/ACCEPTANCE.md](ACCEPTANCE.md) |
+
+See [docs/TLE.md](TLE.md) and [docs/PERFORMANCE.md](PERFORMANCE.md).
 
 ---
 

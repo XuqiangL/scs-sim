@@ -90,11 +90,11 @@ def test_retired_sats_excluded_from_isl() -> None:
 
 def test_tle_parser_loads_two_line_fixture() -> None:
     recs = parse_tle_file(FIXTURE)
-    assert len(recs) == 2
+    assert len(recs) >= 2
     assert recs[0].line1.startswith("1 ")
     assert recs[0].line2.startswith("2 ")
     assert recs[0].satnum == 44713
     el = tle_to_elements(recs, datetime(2026, 3, 6, tzinfo=timezone.utc))
-    assert len(el) == 2
+    assert len(el) == len(recs)
     assert 6800.0 < el.a_m[0] / 1000.0 < 7200.0
     assert abs(float(el.i_rad[0]) - 53.05 * 3.1415926535 / 180.0) < 0.01

@@ -1,6 +1,25 @@
 # Progress log
 
-Claimed product completion at end of this log: **~91%** (Phases 1–7: API + twin + Orekit stub + Windows venv).
+Claimed product completion at end of this log: **~97%** (Phases 1–8: catalog align + 10k bench + acceptance).
+
+## 2026-09-06 — Catalog TLE align, 10k bench, acceptance (~97%)
+
+Continued on `main`. Opt-in CelesTrak fetch, fixture TLE alignment vs Walker, timing hooks, acceptance checklist. No signed MSI, no paid Cesium, no CI network.
+
+- `scs_sim/catalog/`: resolve local TLE or `--fetch-tle`; SGP4 from two-line sets; `out/tle_align_report.json`.
+- Fixture `tests/fixtures/starlink_sample.tle` — 8 Starlink-format 3-line sets (24 lines), checksums valid.
+- `python -m scs_sim.bench` / `scripts/run_bench.bat` — Walker N=10008, Kepler-J2 steps, `--isl-max-sats`.
+- `docs/TLE.md`, `docs/PERFORMANCE.md`, `docs/ACCEPTANCE.md`.
+- `scripts/run_all_demos.bat` — Phase 1→6 small configs, then TLE align + micro-bench; stop on first fail.
+- Tests: `test_catalog.py` (offline), `test_bench.py` (N=64).
+
+**Still out of scope:** signed MSI, production auth, live Orekit, Hypatia ns-3, paid Cesium ion.
+
+```
+Phase 1–7 ██████████  done
+Phase 8   █████████░  catalog / bench / acceptance
+Product   ███████████████████████████████████████  97%
+```
 
 ## 2026-09-06 — Phase 7 ops API + packaging + twin (~91%)
 

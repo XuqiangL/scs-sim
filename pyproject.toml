@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scs-sim"
-version = "0.7.0"
-description = "Industrial-grade Starlink-like compute constellation simulator (Phase 7: ops API + twin)"
+version = "0.8.0"
+description = "Industrial-grade Starlink-like compute constellation simulator (catalog + 10k bench)"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -29,6 +29,8 @@ scs-sim = "scs_sim.cli:main"
 scs-demo = "scs_sim.demo:main"
 scs-viz = "scs_sim.demo_viz:main"
 scs-api = "scs_sim.api.__main__:main"
+scs-catalog = "scs_sim.catalog.__main__:main"
+scs-bench = "scs_sim.bench:main"
 
 [project.urls]
 Documentation = "docs/ARCHITECTURE.md"

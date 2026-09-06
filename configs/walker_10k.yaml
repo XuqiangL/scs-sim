@@ -11,7 +11,12 @@ description: >
   10008 satellites; set demo.max_sats to run a faster subset.
 
 epoch: "2026-09-06T00:00:00Z"
-propagator: kepler_j2   # kepler_j2 | sgp4
+propagator: kepler_j2   # kepler_j2 | sgp4 | orekit (stub)
+
+catalog:
+  fetch: false
+  cache_path: out/starlink.tle
+  tle_path: tests/fixtures/starlink_sample.tle
 
 earth:
   model: wgs84

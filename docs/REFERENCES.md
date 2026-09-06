@@ -25,7 +25,7 @@ https://www.orekit.org/) — we do not vendor JARs or require a JDK.
 | **poliastro** | Python astrodynamics (Astropy). Reference for Kepler/J2 formulas; project is in maintenance. | MIT | https://github.com/poliastro/poliastro |
 | **humeris** | Python constellation / conjunction / analysis toolkit. Design reference for catalog ops. | check PyPI | https://pypi.org/project/humeris/ |
 | **python-sgp4** | Brandon Rhodes SGP4 — **used in Phase 1** as an optional propagator. | MIT | https://github.com/brandon-rhodes/python-sgp4 |
-| **CelesTrak** | TLE / OMM catalogs. Phase 5 optional ingest via `deployment.tle_path` (`scs_sim.ops.tle`). | data TOS | https://celestrak.org/ |
+| **CelesTrak** | TLE / OMM catalogs. Offline fixture + `deployment.tle_path`. HTTP fetch is **opt-in** (`scs_sim.catalog`, `--fetch-tle`). | data TOS | https://celestrak.org/ |
 
 ## Standards / texts (formulas)
 

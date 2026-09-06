@@ -1,7 +1,7 @@
-"""Load YAML constellation, network, environment, compute, ops, and viz configuration.
+"""Load YAML constellation, network, environment, compute, ops, viz, and catalog configuration.
 
-Phase: 1–6
-Completion: 96%
+Phase: 1–8
+Completion: 97%
 """
 
 from __future__ import annotations
@@ -202,6 +202,16 @@ class DeploymentConfig:
 
 
 @dataclass(frozen=True)
+class CatalogConfig:
+    """CelesTrak / local TLE. ``fetch`` is opt-in so CI stays offline."""
+
+    fetch: bool = False
+    url: str = "https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=tle"
+    cache_path: str = "out/starlink.tle"
+    tle_path: str | None = None
+
+
+@dataclass(frozen=True)
 class EarthConfig:
     model: str = "wgs84"
 
@@ -225,6 +235,7 @@ class SimConfig:
     radiation: RadiationConfig = field(default_factory=RadiationConfig)
     compute: ComputeConfig = field(default_factory=ComputeConfig)
     deployment: DeploymentConfig = field(default_factory=DeploymentConfig)
+    catalog: CatalogConfig = field(default_factory=CatalogConfig)
     description: str = ""
     path: Path | None = None
 
@@ -447,6 +458,14 @@ def load_config(path: str | Path) -> SimConfig:
         conjunction_sample=int(dep_raw.get("conjunction_sample", 40)),
         decommission_hours=float(dep_raw.get("decommission_hours", 1.0)),
     )
+    cat_raw = raw.get("catalog") or {}
+    cat_tle = cat_raw.get("tle_path")
+    catalog = CatalogConfig(
+        fetch=bool(cat_raw.get("fetch", False)),
+        url=str(cat_raw.get("url", CatalogConfig.url)),
+        cache_path=str(cat_raw.get("cache_path", "out/starlink.tle")),
+        tle_path=None if cat_tle in (None, "", "none") else str(cat_tle),
+    )
 
     cfg = SimConfig(
         name=str(raw.get("name", cfg_path.stem)),
@@ -464,6 +483,7 @@ def load_config(path: str | Path) -> SimConfig:
         radiation=radiation,
         compute=compute,
         deployment=deployment,
+        catalog=catalog,
         description=str(raw.get("description", "")).strip(),
         path=cfg_path,
     )
