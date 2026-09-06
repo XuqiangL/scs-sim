@@ -35,6 +35,8 @@ pip install -e ".[dev,viz,api]"
 | `scripts\run_phase5.bat` | Ops waves |
 | `scripts\run_phase6.bat` | CZML / KPI |
 | `scripts\run_api.bat` | FastAPI on `127.0.0.1:18765` |
+| `scripts\run_all_demos.bat` | Phase 1→6 small configs, then TLE align + micro-bench |
+| `scripts\run_bench.bat` | 10k generate + Kepler-J2 (`out/bench.json`) |
 | `scripts\build_pyinstaller.ps1` | **Optional** one-folder `scs-demo` |
 
 ## Optional PyInstaller
