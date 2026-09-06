@@ -28,3 +28,8 @@ Thumbs.db
 .vscode/
 *.swp
 agent-tools/
+
+# Local one-off patch helpers
+_fix_*.py
+_write_*.py
+_patch_*.py

@@ -7,7 +7,7 @@ description: >
   dashboard. No Cesium API key is required to generate artifacts.
 
 epoch: "2026-09-06T00:00:00Z"
-propagator: kepler_j2
+propagator: kepler_j2_gpu
 
 earth:
   model: wgs84

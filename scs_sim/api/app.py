@@ -126,6 +126,23 @@ def create_app(session: SimSession | None = None) -> Any:
     def control_page() -> Any:
         return _ui_page()
 
+    @app.get("/system/gpu")
+    def system_gpu() -> dict[str, Any]:
+        from scs_sim.orbit.gpu_kepler import gpu_backend_info
+
+        info = gpu_backend_info()
+        prop_name = None
+        using = None
+        try:
+            if session.prop is not None:
+                prop_name = getattr(session.prop, "name", None)
+                using = bool(getattr(session.prop, "using_cuda", False))
+        except Exception:
+            pass
+        info["active_propagator"] = prop_name
+        info["active_using_cuda"] = using
+        return info
+
     @app.get("/health")
     def health() -> dict[str, Any]:
         return {
@@ -328,6 +345,23 @@ def create_app(session: SimSession | None = None) -> Any:
         return {}
 
     app.state.session = sess
+
+    globe_dir = Path(__file__).resolve().parent.parent / "viz" / "globe3d"
+
+    @app.get("/viz/globe3d/{asset_path:path}")
+    def globe_asset(asset_path: str) -> FileResponse:
+        target = (globe_dir / asset_path).resolve()
+        if not str(target).startswith(str(globe_dir.resolve())) or not target.is_file():
+            raise HTTPException(404, "asset not found")
+        return FileResponse(target)
+
+    @app.get("/viz/scene")
+    def viz_scene() -> dict[str, Any]:
+        if not session.loaded:
+            raise HTTPException(400, "no session loaded")
+        return session.scene_3d()
+
+
     return app
 
 

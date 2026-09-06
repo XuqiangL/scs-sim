@@ -1,5 +1,5 @@
 # Starlink-like multi-shell Walker-delta constellation targeting ~10000 sats.
-# Phase 1â€“3: orbits + +Grid/GSL topology + eclipse/atmosphere stubs.
+# Phase 1â€?: orbits + +Grid/GSL topology + eclipse/atmosphere stubs.
 #
 # Notation per shell: i : T/P/F  (inclination : total / planes / phasing)
 # Total T = 10008. Demo may subsample via demo.max_sats.
@@ -11,7 +11,7 @@ description: >
   10008 satellites; set demo.max_sats to run a faster subset.
 
 epoch: "2026-09-06T00:00:00Z"
-propagator: kepler_j2   # kepler_j2 | sgp4 | orekit (stub)
+propagator: kepler_j2_gpu   # kepler_j2 | sgp4 | orekit (stub)
 
 catalog:
   fetch: false

@@ -458,6 +458,71 @@ class SimSession:
         self.overrides_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         return self.overrides_path
 
+
+
+    def scene_3d(self) -> dict[str, Any]:
+        """Snapshot for Cesium/three: sats, ISL, reference layers."""
+        self._require()
+        from scs_sim.viz.layers import scene_layers_from_config
+
+        elapsed = float(self.clock.elapsed_seconds)
+        r_ecef = self.prop.positions_ecef_m(self.elements, self.cfg.epoch, elapsed)
+        r_eci = self.prop.positions_eci_m(self.elements, elapsed)
+        lat, lon, alt = ecef_to_geodetic_n(r_ecef)
+        ids = self._sat_ids()
+        states = self._states()
+        degree = self._isl_degree_map()
+        sun_frac = None
+        try:
+            sun_frac = self.eclipse.sunlight_fraction(r_eci, self.clock.now)
+        except Exception:
+            sun_frac = None
+        sats = []
+        for i, sid in enumerate(ids):
+            ecl = False
+            if sun_frac is not None:
+                ecl = float(sun_frac[i]) < 0.05
+            sats.append(
+                {
+                    "sat_id": sid,
+                    "lat_deg": float(lat[i]),
+                    "lon_deg": float(lon[i]),
+                    "alt_km": float(alt[i]) / 1000.0,
+                    "ecef_m": [float(r_ecef[i, 0]), float(r_ecef[i, 1]), float(r_ecef[i, 2])],
+                    "eci_m": [float(r_eci[i, 0]), float(r_eci[i, 1]), float(r_eci[i, 2])],
+                    "state": states.get(sid, "operational"),
+                    "isl_degree": int(degree.get(sid, 0)),
+                    "in_eclipse": ecl,
+                }
+            )
+        isl = []
+        if getattr(self, "snapshots", None):
+            snap = self.snapshots[-1]
+            for e in list(getattr(snap, "isl_edges", []) or [])[:2000]:
+                a = getattr(e, "a", None)
+                b = getattr(e, "b", None)
+                if a is None:
+                    continue
+                isl.append({"a": str(a), "b": str(b)})
+        shells = []
+        for sh in self.cfg.shells:
+            shells.append(
+                {
+                    "altitude_km": float(sh.altitude_km),
+                    "inclination_deg": float(sh.inclination_deg),
+                    "planes": int(sh.n_planes),
+                }
+            )
+        layers = scene_layers_from_config(shells)
+        return {
+            "t_utc": self.clock.now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "step": int(self.clock.step),
+            "n_sats": len(sats),
+            "sats": sats,
+            "isl": isl,
+            "layers": layers,
+        }
+
     def apply_fleet(self, patch: dict[str, Any]) -> dict[str, Any]:
         self._require()
         assert self.cfg is not None and self.clock is not None and self.batteries is not None

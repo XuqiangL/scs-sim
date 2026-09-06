@@ -4,99 +4,106 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>SCS-Sim Control · 星座控制台</title>
+<link id="cesium-css" href="/viz/globe3d/cesium/Widgets/widgets.css" rel="stylesheet"/>
+<script>
+(function(){
+  function loadCss(href){ var l=document.getElementById('cesium-css'); if(l) l.href=href; }
+  function loadScript(src, onload, onerror){
+    var s=document.createElement('script'); s.src=src; s.onload=onload; s.onerror=onerror; document.head.appendChild(s);
+  }
+  window.__cesiumReady = new Promise(function(resolve){
+    loadScript('/viz/globe3d/cesium/Cesium.js', function(){ resolve('local'); }, function(){
+      loadCss('https://cesium.com/downloads/cesiumjs/releases/1.125/Build/Cesium/Widgets/widgets.css');
+      loadScript('https://cesium.com/downloads/cesiumjs/releases/1.125/Build/Cesium/Cesium.js', function(){ resolve('cdn'); }, function(){ resolve('fail'); });
+    });
+  });
+})();
+</script>
 <style>
   :root {
-    --bg: #0b0e12;
-    --panel: #141a22;
-    --panel-2: #1a222c;
-    --line: #2a3544;
-    --text: #e8eef4;
-    --muted: #8b9aab;
-    --accent: #3dd6c6;
-    --amber: #f0b429;
-    --warn: #ff8a5b;
-    --ok: #7dffa0;
-    --input: #0f141b;
-    --radius: 10px;
+    --bg: #0b0e12; --panel: #141a22; --panel-2: #1a222c; --line: #2a3544;
+    --text: #e8eef4; --muted: #8b9aab; --accent: #3dd6c6; --amber: #f0b429;
+    --warn: #ff8a5b; --ok: #7dffa0; --input: #0f141b; --radius: 10px;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--bg); color: var(--text);
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
     font-family: "Segoe UI", "Noto Sans SC", "PingFang SC", sans-serif; }
   header {
     display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
-    gap: 12px; padding: 18px 22px 10px; border-bottom: 1px solid var(--line);
+    gap: 12px; padding: 14px 22px 8px; border-bottom: 1px solid var(--line);
   }
-  h1 { margin: 0; font-size: 1.2rem; letter-spacing: 0.04em; font-weight: 650; }
+  h1 { margin: 0; font-size: 1.15rem; letter-spacing: 0.04em; font-weight: 650; }
   h1 span { color: var(--accent); font-weight: 500; }
-  .sub { color: var(--muted); font-size: 0.86rem; margin-top: 4px; }
-  .status {
-    display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 22px;
-  }
+  .sub { color: var(--muted); font-size: 0.84rem; margin-top: 4px; }
+  .status { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 22px; }
   .pill {
     background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
-    padding: 6px 12px; font-size: 0.8rem; color: var(--muted);
+    padding: 6px 12px; font-size: 0.78rem; color: var(--muted);
   }
   .pill b { color: var(--accent); font-weight: 650; }
-  main {
-    display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 14px;
-    padding: 0 22px 22px;
+  .layout {
+    display: grid; grid-template-columns: 380px 1fr 340px; gap: 12px;
+    padding: 0 16px 12px; min-height: calc(100vh - 210px);
   }
-  @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+  @media (max-width: 1200px) { .layout { grid-template-columns: 1fr; } }
   section.card {
     background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 14px 16px 16px;
+    padding: 12px 14px 14px; overflow: auto; max-height: calc(100vh - 220px);
   }
-  h2 { margin: 0 0 10px; font-size: 0.95rem; color: #d5e2ee; }
+  #globe-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; min-height: 480px; }
+  #cesiumContainer { flex: 1; width: 100%; min-height: 420px; }
+  .view-bar {
+    display: flex; gap: 8px; align-items: center; padding: 8px 10px;
+    border-bottom: 1px solid var(--line); background: var(--panel-2);
+  }
+  .view-bar button.active { border-color: var(--accent); color: var(--accent); }
+  h2 { margin: 0 0 10px; font-size: 0.92rem; color: #d5e2ee; }
   h2 small { color: var(--muted); font-weight: 400; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
-  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
-  label { display: block; font-size: 0.74rem; color: var(--muted); margin-bottom: 4px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+  label { display: block; font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
   label em { font-style: normal; color: #c9d6e2; }
   input[type=range] { width: 100%; accent-color: var(--accent); }
   input[type=number], input[type=search], select {
     width: 100%; background: var(--input); color: var(--text);
-    border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 0.88rem;
+    border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 0.85rem;
   }
   .row { display: flex; align-items: center; gap: 8px; }
-  .val { min-width: 4.5rem; text-align: right; color: var(--amber); font-variant-numeric: tabular-nums; font-size: 0.82rem; }
-  .toggle { display: flex; align-items: center; gap: 8px; min-height: 42px; }
-  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .val { min-width: 4.2rem; text-align: right; color: var(--amber); font-variant-numeric: tabular-nums; font-size: 0.8rem; }
+  .toggle { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
   button {
     background: #1d2a33; color: var(--text); border: 1px solid #355064;
-    border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 0.84rem;
+    border-radius: 6px; padding: 7px 10px; cursor: pointer; font-size: 0.8rem;
   }
   button.primary { background: #134e4a; border-color: #2dd4bf; color: #ecfeff; }
   button.amber { background: #3d2e10; border-color: var(--amber); color: #ffe8a3; }
-  button.warn { background: #3a1d14; border-color: var(--warn); }
   button:disabled { opacity: 0.45; cursor: not-allowed; }
   button:hover:not(:disabled) { filter: brightness(1.12); }
-  .map {
-    height: 220px; background: #0a1016; border: 1px solid var(--line); border-radius: 8px;
-    width: 100%;
-  }
-  .readouts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
+  .map { height: 160px; background: #0a1016; border: 1px solid var(--line); border-radius: 8px; width: 100%; }
+  .readouts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
   .metric { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
-  .metric b { display: block; color: var(--accent); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
-  .metric span { color: var(--muted); font-size: 0.74rem; }
+  .metric b { display: block; color: var(--accent); font-size: 0.98rem; font-variant-numeric: tabular-nums; }
+  .metric span { color: var(--muted); font-size: 0.72rem; }
   .log {
-    margin: 0 22px 22px; background: #0a1016; border: 1px solid var(--line);
+    margin: 0 16px 16px; background: #0a1016; border: 1px solid var(--line);
     border-radius: 8px; padding: 10px 12px; font-family: ui-monospace, Consolas, monospace;
-    font-size: 0.75rem; color: #9fb0c0; max-height: 140px; overflow: auto; white-space: pre-wrap;
+    font-size: 0.74rem; color: #9fb0c0; max-height: 110px; overflow: auto; white-space: pre-wrap;
   }
-  .err { color: var(--warn); }
-  .ok { color: var(--ok); }
+  .err { color: var(--warn); } .ok { color: var(--ok); }
+  .layer-toggles { display: flex; flex-wrap: wrap; gap: 10px; padding: 6px 10px 10px; font-size: 0.75rem; color: var(--muted); }
+  a { color: #7cb7ff; }
 </style>
 </head>
 <body>
 <header>
   <div>
     <h1>SCS-Sim Control <span>/ 星座控制台</span></h1>
-    <div class="sub">Live session · mutations hit the running engine, not only YAML · 运行时改物理参数</div>
+    <div class="sub">2D+3D · WebView2/GPU · 万星 LOD · 运行时改物理</div>
   </div>
-  <div class="sub" id="hint">OpenAPI: <a href="/docs" style="color:#7cb7ff">/docs</a> · UI: /ui · /control</div>
+  <div class="sub">OpenAPI <a href="/docs">/docs</a> · UI /ui · 3D scene /viz/scene</div>
 </header>
 <div class="status" id="status"></div>
-<main>
+<div class="layout">
   <section class="card" id="fleet-panel">
     <h2>Fleet 星座级 <small>whole constellation</small></h2>
     <div class="grid" id="fleet-fields"></div>
@@ -109,75 +116,100 @@
       <button id="btn-kpi">Export KPI JSON</button>
     </div>
   </section>
+
+  <section class="card" id="globe-card">
+    <div class="view-bar">
+      <strong style="margin-right:8px">View</strong>
+      <button id="btn-view-dual" class="active">Dual 双视图</button>
+      <button id="btn-view-3d">3D</button>
+      <button id="btn-view-2d">2D</button>
+      <span style="flex:1"></span>
+      <button id="btn-refresh-scene">Refresh 3D</button>
+    </div>
+    <div id="cesiumContainer"></div>
+    <div class="layer-toggles">
+      <label><input type="checkbox" id="ly-equator" checked/> 赤道面 Equator</label>
+      <label><input type="checkbox" id="ly-planes" checked/> 轨道面 Planes</label>
+      <label><input type="checkbox" id="ly-shells" checked/> 壳层 Shells</label>
+      <label><input type="checkbox" id="ly-isl" checked/> ISL</label>
+      <label><input type="checkbox" id="ly-sats" checked/> 卫星 Sats</label>
+    </div>
+  </section>
+
   <section class="card" id="sat-panel">
-    <h2>Satellite 单星 <small>per-sat override</small></h2>
+    <h2>Satellite 单星 <small>per-sat + 2D map</small></h2>
     <label><em>sat_id</em> 选择 / 搜索</label>
     <div class="row" style="margin-bottom:10px">
-      <input type="search" id="sat-search" placeholder="filter sat_id…"/>
+      <input type="search" id="sat-search" placeholder="filter sat_id"/>
       <select id="sat-pick"></select>
     </div>
     <div class="grid" id="sat-fields"></div>
     <div class="actions">
       <button class="primary" id="btn-apply-sat">Apply sat · 应用单星</button>
-      <button class="warn" id="btn-reset-sat">Reset sat · 复位</button>
+      <button id="btn-reset-sat">Reset sat · 复位</button>
     </div>
-    <canvas class="map" id="map" width="720" height="220"></canvas>
+    <h2 style="margin-top:14px">2D ground track <small>保留</small></h2>
+    <canvas class="map" id="map" width="640" height="320"></canvas>
     <div class="readouts" id="sat-readouts"></div>
   </section>
-</main>
-<div class="log" id="log">ready.</div>
+</div>
+<div class="log" id="log"></div>
 <script>
-(function () {
+(() => {
   const $ = (id) => document.getElementById(id);
-  const logEl = $("log");
-  let state = { loaded: false, sats: [], fleet: {}, selected: null };
-  let pick = "";
-
-  function log(msg, cls) {
-    const t = new Date().toISOString().slice(11, 19);
-    logEl.innerHTML = `<span class="${cls || ""}">[${t}] ${msg}</span>\n` + logEl.innerHTML;
+  const log = (msg, cls) => {
+    const el = $("log");
+    const line = document.createElement("div");
+    if (cls) line.className = cls;
+    line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    el.prepend(line);
+  };
+  async function api(path, opt) {
+    const r = await fetch(path, Object.assign({ headers: { "Content-Type": "application/json" } }, opt || {}));
+    if (!r.ok) {
+      let detail = r.statusText;
+      try { detail = (await r.json()).detail || detail; } catch (_) {}
+      throw new Error(path + " · " + detail);
+    }
+    if (r.status === 204) return null;
+    return r.json();
   }
-  async function api(path, opts) {
-    const r = await fetch(path, Object.assign({ headers: { "Content-Type": "application/json" } }, opts || {}));
-    const text = await r.text();
-    let body;
-    try { body = JSON.parse(text); } catch { body = { detail: text }; }
-    if (!r.ok) throw new Error((body.detail && (body.detail.msg || body.detail)) || r.statusText);
-    return body;
-  }
-  function num(id, fallback) {
-    const el = $(id);
-    if (!el) return fallback;
-    const v = parseFloat(el.value);
-    return Number.isFinite(v) ? v : fallback;
-  }
-  function bool(id) { return $(id).checked; }
-
   const fleetSpec = [
-    ["dt_seconds", "dt (s) 步长", 1, 300, 1],
-    ["isl_max_range_km", "ISL max range 星间最大距离 km", 200, 12000, 50],
-    ["gsl_min_elevation_deg", "GSL min elev 最低仰角 °", 0, 60, 1],
-    ["solar_w", "Solar power 太阳能峰值 W", 200, 8000, 50],
-    ["battery_capacity_wh", "Battery 电池容量 Wh", 20, 800, 5],
-    ["atmosphere_scale", "Atmosphere scale 大气密度倍率", 0, 10, 0.1],
-    ["compute_flops", "Compute FLOPs 算力", 1e12, 1e14, 1e12],
-    ["idle_w", "Idle watts 空闲功耗", 10, 400, 5],
-    ["busy_w", "Busy watts 忙碌功耗", 50, 1200, 10],
+    ["dt_seconds", "dt_seconds 步长(s)", 1, 600, 1],
+    ["isl_max_range_km", "ISL max range (km)", 500, 10000, 50],
+    ["gsl_min_elevation_deg", "GSL min elev (deg)", 0, 60, 1],
+    ["solar_w", "Solar power (W)", 0, 5000, 10],
+    ["battery_capacity_wh", "Battery capacity (Wh)", 10, 2000, 10],
+    ["atmosphere_scale", "Atmosphere scale", 0, 10, 0.1],
+    ["compute_flops", "Compute FLOPS", 1e11, 1e14, 1e11],
+    ["idle_w", "Idle watts", 0, 500, 1],
+    ["busy_w", "Busy watts", 0, 2000, 5],
   ];
   const toggles = [
     ["apply_drag", "Drag 大气阻力"],
-    ["eclipse", "Eclipse model 地影"],
+    ["eclipse", "Eclipse model 阴影模型"],
   ];
   const satSpec = [
-    ["a_km", "a 半长轴 km", 6500, 8000, 1],
-    ["e", "e 偏心率", 0, 0.05, 0.001],
-    ["i_deg", "i 倾角 °", 0, 180, 0.1],
-    ["raan_deg", "RAAN 升交点赤经 °", 0, 360, 0.1],
-    ["soc", "SoC 荷电状态", 0, 1, 0.01],
-    ["power_draw_w", "Power draw 功耗 W", 0, 800, 5],
-    ["flops", "Compute capacity 单星算力", 1e12, 1e14, 1e12],
+    ["a_km", "a (km)", 6600, 8000, 1],
+    ["e", "e", 0, 0.05, 0.0001],
+    ["i_deg", "i (deg)", 0, 180, 0.1],
+    ["raan_deg", "Ω RAAN (deg)", -180, 360, 0.1],
+    ["soc", "SoC", 0, 1, 0.001],
+    ["power_draw_w", "Power draw (W)", 0, 1000, 1],
+    ["flops", "Compute capacity", 1e11, 1e14, 1e11],
   ];
+  let state = { sats: [], fleet: {}, states: [] };
+  let pick = "";
+  let viewer = null;
+  let satEntities = {};
+  let satPoints = null;
+  let islPrimitive = null;
+  let islAnim = 0;
+  let layerEntities = { equator: [], planes: [], shells: [], isl: [] };
+  let lastScene = null;
 
+  function num(id) { return parseFloat($(id).value); }
+  function bool(id) { return !!$(id).checked; }
   function slider(id, label, min, max, step, value) {
     return `<div><label><em>${label}</em></label>
       <div class="row">
@@ -188,11 +220,9 @@
   function bindPair(id) {
     const a = $(id), b = $(id + "-n");
     if (!a || !b) return;
-    const sync = (src, dst) => () => { dst.value = src.value; };
-    a.addEventListener("input", sync(a, b));
-    b.addEventListener("input", sync(b, a));
+    a.addEventListener("input", () => b.value = a.value);
+    b.addEventListener("input", () => a.value = b.value);
   }
-
   function renderFleet(p) {
     const host = $("fleet-fields");
     host.innerHTML = fleetSpec.map(([k, lab, min, max, step]) =>
@@ -203,7 +233,6 @@
     ).join("");
     fleetSpec.forEach(([k]) => bindPair("f-" + k));
   }
-
   function renderSatFields(sat) {
     const host = $("sat-fields");
     const src = sat || {};
@@ -214,38 +243,31 @@
         `<option value="${s}" ${src.state === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>`;
     satSpec.forEach(([k]) => bindPair("s-" + k));
   }
-
   function pills() {
     const st = state;
     const live = st.fleet_live || {};
     const bits = [
       ["loaded", st.loaded ? "yes" : "no"],
-      ["config", st.config || "—"],
-      ["step", st.step ?? "—"],
-      ["t_utc", st.t_utc || "—"],
-      ["n_sats", st.n_sats ?? "—"],
-      ["mean SoC 平均荷电", live.mean_soc == null ? "—" : live.mean_soc.toFixed(3)],
-      ["eclipse % 地影占比", live.eclipse_pct == null ? "—" : live.eclipse_pct.toFixed(1) + "%"],
-      ["mean T 平均温度", live.mean_temp_k == null ? "—" : live.mean_temp_k.toFixed(1) + " K"],
+      ["config", st.config || "-"],
+      ["step", st.step ?? "-"],
+      ["n_sats", st.n_sats ?? "-"],
+      ["mean SoC", live.mean_soc == null ? "-" : live.mean_soc.toFixed(3)],
+      ["eclipse %", live.eclipse_pct == null ? "-" : live.eclipse_pct.toFixed(1) + "%"],
+      ["mean T", live.mean_temp_k == null ? "-" : live.mean_temp_k.toFixed(1) + " K"],
       ["ISL edges", live.n_isl ?? 0],
     ];
     $("status").innerHTML = bits.map(([k, v]) => `<div class="pill">${k}: <b>${v}</b></div>`).join("");
   }
-
   function populatePick() {
     const q = ($("sat-search").value || "").toLowerCase();
     const sats = (state.sats || []).filter(s => s.sat_id.toLowerCase().includes(q));
     const sel = $("sat-pick");
     const prev = pick || (sats[0] && sats[0].sat_id);
-    sel.innerHTML = sats.map(s => `<option value="${s.sat_id}">${s.sat_id}  SoC ${s.soc.toFixed(2)}  ${s.state}</option>`).join("");
+    sel.innerHTML = sats.map(s => `<option value="${s.sat_id}">${s.sat_id}  SoC ${(s.soc||0).toFixed(2)}  ${s.state}</option>`).join("");
     if (prev && sats.some(s => s.sat_id === prev)) sel.value = prev;
     pick = sel.value;
   }
-
-  function selectedSat() {
-    return (state.sats || []).find(s => s.sat_id === pick) || null;
-  }
-
+  function selectedSat() { return (state.sats || []).find(s => s.sat_id === pick) || null; }
   function readouts(sat) {
     const host = $("sat-readouts");
     if (!sat) { host.innerHTML = ""; return; }
@@ -253,21 +275,18 @@
       ["Position 位置", `${sat.lat_deg.toFixed(2)}°, ${sat.lon_deg.toFixed(2)}°  ${sat.alt_km.toFixed(1)} km`],
       ["SoC", sat.soc.toFixed(3)],
       ["Eclipse 地影", sat.in_eclipse ? "YES / 阴影" : "sun / 日照"],
-      ["Temp 温度", sat.temp_k.toFixed(1) + " K"],
-      ["ISL degree 度数", sat.isl_degree],
-      ["Sunlight 日照比", sat.sunlight.toFixed(2)],
+      ["Temp 温度", (sat.temp_k||0).toFixed(1) + " K"],
+      ["ISL degree", sat.isl_degree],
+      ["Sunlight", (sat.sunlight||0).toFixed(2)],
     ];
     host.innerHTML = cells.map(([k, v]) => `<div class="metric"><b>${v}</b><span>${k}</span></div>`).join("");
   }
-
   function drawMap() {
     const c = $("map");
     const ctx = c.getContext("2d");
     const w = c.width, h = c.height;
-    ctx.fillStyle = "#0a1016";
-    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "#0a1016"; ctx.fillRect(0, 0, w, h);
     ctx.strokeStyle = "#243040";
-    ctx.lineWidth = 1;
     for (let i = 1; i < 6; i++) {
       ctx.beginPath(); ctx.moveTo(0, i * h / 6); ctx.lineTo(w, i * h / 6); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(i * w / 6, 0); ctx.lineTo(i * w / 6, h); ctx.stroke();
@@ -276,10 +295,178 @@
       const x = (s.lon_deg + 180) / 360 * w;
       const y = (90 - s.lat_deg) / 180 * h;
       ctx.fillStyle = s.sat_id === pick ? "#f0b429" : (s.in_eclipse ? "#5b6b7c" : "#3dd6c6");
-      ctx.beginPath();
-      ctx.arc(x, y, s.sat_id === pick ? 5 : 2.4, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, s.sat_id === pick ? 5 : 2.4, 0, Math.PI * 2); ctx.fill();
     });
+  }
+
+  function initCesium() {
+    if (viewer) return;
+    if (typeof Cesium === "undefined") { log("Cesium not loaded yet", "err"); return; }
+    try { Cesium.Ion.defaultAccessToken = undefined; } catch (_) {}
+    viewer = new Cesium.Viewer("cesiumContainer", {
+      animation: false, timeline: false, geocoder: false, homeButton: true,
+      sceneModePicker: true, baseLayerPicker: false, navigationHelpButton: false,
+      fullscreenButton: true, infoBox: true, selectionIndicator: true,
+      baseLayer: false,
+      terrain: undefined,
+      requestRenderMode: false,
+      targetFrameRate: 60,
+      contextOptions: { webgl: { powerPreference: "high-performance", antialias: true } },
+    });
+    try { viewer.imageryLayers.removeAll(); } catch (_) {}
+    viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString("#0a1a2a");
+    viewer.scene.globe.enableLighting = true;
+    viewer.scene.globe.depthTestAgainstTerrain = false;
+    viewer.scene.fog.enabled = true;
+    if (viewer.scene.skyAtmosphere) viewer.scene.skyAtmosphere.show = true;
+    // Real Earth imagery (ArcGIS World Imagery) — GPU texture; falls back to blue globe
+    try {
+      const img = new Cesium.UrlTemplateImageryProvider({
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        maximumLevel: 8,
+        credit: "Esri World Imagery",
+      });
+      viewer.imageryLayers.addImageryProvider(img);
+      log("Earth texture · ArcGIS World Imagery", "ok");
+    } catch (e) {
+      log("Earth texture fallback blue globe: " + e.message, "err");
+    }
+    viewer.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(105.0, 20.0, 2.2e7)
+    });
+    satPoints = viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection());
+    // ISL pulse animation on GPU/WebGL
+    viewer.scene.preRender.addEventListener(function() {
+      islAnim = (islAnim + 0.02) % (Math.PI * 2);
+      if (!islPrimitive || !lastScene) return;
+      const a = 0.18 + 0.22 * (0.5 + 0.5 * Math.sin(islAnim));
+      try {
+        // entities ISL alpha pulse
+        (layerEntities.isl || []).forEach((ent, idx) => {
+          if (ent.polyline && ent.polyline.material) {
+            const phase = 0.15 + 0.25 * (0.5 + 0.5 * Math.sin(islAnim + idx * 0.07));
+            ent.polyline.material = Cesium.Color.AQUAMARINE.withAlpha(phase);
+          }
+        });
+      } catch (_) {}
+    });
+    log("Cesium 3D GPU ready · WebGL high-performance", "ok");
+  }
+
+  function clearLayer(key) {
+    (layerEntities[key] || []).forEach(e => viewer.entities.remove(e));
+    layerEntities[key] = [];
+  }
+
+  function ecefToCartesian(p) {
+    return new Cesium.Cartesian3(p[0], p[1], p[2]);
+  }
+
+  function drawPolyline(ecefList, color, width, key) {
+    if (!ecefList || ecefList.length < 2) return;
+    const positions = ecefList.map(ecefToCartesian);
+    // close ring
+    positions.push(positions[0]);
+    const ent = viewer.entities.add({
+      polyline: {
+        positions,
+        width: width || 1.5,
+        material: color,
+        clampToGround: false,
+      }
+    });
+    layerEntities[key].push(ent);
+  }
+
+  async function refreshScene() {
+    initCesium();
+    const scene = await api("/viz/scene");
+    lastScene = scene;
+    // sats — PointPrimitiveCollection (GPU) + LOD for ~10k
+    Object.values(satEntities).forEach(e => viewer.entities.remove(e));
+    satEntities = {};
+    if (satPoints) satPoints.removeAll();
+    const satsAll = scene.sats || [];
+    const camH = viewer.camera.positionCartographic
+      ? viewer.camera.positionCartographic.height : 2e7;
+    let lodStep = 1;
+    if (satsAll.length > 2500 && camH > 1.2e7) lodStep = 4;
+    else if (satsAll.length > 2500 && camH > 6e6) lodStep = 2;
+    else if (satsAll.length > 6000 && camH > 3e6) lodStep = 2;
+    if ($("ly-sats").checked && satPoints) {
+      for (let i = 0; i < satsAll.length; i += lodStep) {
+        const s = satsAll[i];
+        const isPick = s.sat_id === pick;
+        if (!isPick && lodStep > 1 && i % lodStep !== 0) continue;
+        const color = isPick ? Cesium.Color.GOLD : (s.in_eclipse ? Cesium.Color.SLATEGRAY : Cesium.Color.CYAN);
+        satPoints.add({
+          position: Cesium.Cartesian3.fromDegrees(s.lon_deg, s.lat_deg, s.alt_km * 1000),
+          color,
+          pixelSize: isPick ? 10 : (lodStep > 1 ? 3 : 4),
+          scaleByDistance: new Cesium.NearFarScalar(1.5e6, 1.4, 2.5e7, 0.45),
+        });
+      }
+      // keep entity+label only for selected sat
+      if (pick) {
+        const s = satsAll.find(x => x.sat_id === pick);
+        if (s) {
+          satEntities[pick] = viewer.entities.add({
+            id: "sat-" + s.sat_id,
+            position: Cesium.Cartesian3.fromDegrees(s.lon_deg, s.lat_deg, s.alt_km * 1000),
+            label: {
+              text: s.sat_id, font: "12px sans-serif", fillColor: Cesium.Color.WHITE,
+              pixelOffset: new Cesium.Cartesian2(0, -16), showBackground: true,
+              backgroundColor: Cesium.Color.BLACK.withAlpha(0.5)
+            },
+          });
+        }
+      }
+      log("3D sats " + Math.ceil(satsAll.length / lodStep) + "/" + satsAll.length + " (LOD×" + lodStep + ")", "ok");
+    }
+    // ISL with LOD + pulse
+    clearLayer("isl");
+    if ($("ly-isl").checked) {
+      const byId = Object.fromEntries(satsAll.map(s => [s.sat_id, s]));
+      const islMax = camH > 1.5e7 ? 600 : (camH > 8e6 ? 1500 : 4000);
+      const islStep = (scene.isl || []).length > islMax ? Math.ceil((scene.isl || []).length / islMax) : 1;
+      (scene.isl || []).forEach((e, idx) => {
+        if (idx % islStep !== 0) return;
+        const a = byId[e.a], b = byId[e.b];
+        if (!a || !b) return;
+        const ent = viewer.entities.add({
+          polyline: {
+            positions: [
+              Cesium.Cartesian3.fromDegrees(a.lon_deg, a.lat_deg, a.alt_km * 1000),
+              Cesium.Cartesian3.fromDegrees(b.lon_deg, b.lat_deg, b.alt_km * 1000),
+            ],
+            width: 1.0,
+            material: Cesium.Color.AQUAMARINE.withAlpha(0.32),
+          }
+        });
+        layerEntities.isl.push(ent);
+      });
+    }
+    // layers
+    const L = scene.layers || {};
+    clearLayer("equator");
+    if ($("ly-equator").checked && L.equator_ecef_m) {
+      drawPolyline(L.equator_ecef_m, Cesium.Color.YELLOW.withAlpha(0.7), 2, "equator");
+    }
+    clearLayer("planes");
+    if ($("ly-planes").checked) {
+      (L.orbital_planes || []).forEach(p => {
+        drawPolyline(p.ring_ecef_m, Cesium.Color.ORANGE.withAlpha(0.35), 1.2, "planes");
+      });
+    }
+    clearLayer("shells");
+    if ($("ly-shells").checked) {
+      (L.shell_rings || []).forEach(p => {
+        drawPolyline(p.ring_ecef_m, Cesium.Color.DODGERBLUE.withAlpha(0.45), 1.5, "shells");
+      });
+    }
+    if (pick && satEntities[pick]) {
+      viewer.selectedEntity = satEntities[pick];
+    }
   }
 
   function applyState(next, refreshFields) {
@@ -293,6 +480,7 @@
     }
     readouts(sat);
     drawMap();
+    refreshScene().catch(e => log(e.message, "err"));
   }
 
   async function refresh(refreshFields) {
@@ -302,17 +490,53 @@
       st = await api("/config/load", { method: "POST", body: JSON.stringify({ path: "configs/phase6_viz.yaml" }) });
       st = await api("/control/state");
     }
+    // ensure at least one step so topology exists
+    if ((st.step || 0) === 0) {
+      await api("/sim/step", { method: "POST", body: JSON.stringify({ n: 1 }) });
+      st = await api("/control/state");
+    }
     applyState(st, refreshFields);
   }
 
   $("sat-pick").addEventListener("change", () => {
     pick = $("sat-pick").value;
     const sat = selectedSat();
-    renderSatFields(sat);
-    readouts(sat);
-    drawMap();
+    renderSatFields(sat); readouts(sat); drawMap();
+    refreshScene().catch(e => log(e.message, "err"));
   });
   $("sat-search").addEventListener("input", populatePick);
+  ["ly-equator","ly-planes","ly-shells","ly-isl","ly-sats"].forEach(id => {
+    $(id).addEventListener("change", () => refreshScene().catch(e => log(e.message, "err")));
+  });
+  $("btn-refresh-scene").onclick = () => refreshScene().then(() => log("3D refreshed", "ok")).catch(e => log(e.message, "err"));
+
+  function setView(mode) {
+    ["btn-view-dual","btn-view-3d","btn-view-2d"].forEach(id => $(id).classList.remove("active"));
+    const layout = document.querySelector(".layout");
+    if (mode === "3d") {
+      $("btn-view-3d").classList.add("active");
+      layout.style.gridTemplateColumns = "0fr 1fr 0fr";
+      $("fleet-panel").style.display = "none";
+      $("sat-panel").style.display = "none";
+      $("globe-card").style.display = "flex";
+    } else if (mode === "2d") {
+      $("btn-view-2d").classList.add("active");
+      layout.style.gridTemplateColumns = "1fr 0fr 1fr";
+      $("fleet-panel").style.display = "block";
+      $("sat-panel").style.display = "block";
+      $("globe-card").style.display = "none";
+    } else {
+      $("btn-view-dual").classList.add("active");
+      layout.style.gridTemplateColumns = "380px 1fr 340px";
+      $("fleet-panel").style.display = "block";
+      $("sat-panel").style.display = "block";
+      $("globe-card").style.display = "flex";
+    }
+    setTimeout(() => viewer && viewer.resize(), 50);
+  }
+  $("btn-view-dual").onclick = () => setView("dual");
+  $("btn-view-3d").onclick = () => setView("3d");
+  $("btn-view-2d").onclick = () => setView("2d");
 
   $("btn-apply-fleet").onclick = async () => {
     const body = {};
@@ -321,7 +545,7 @@
     try {
       const st = await api("/control/fleet", { method: "POST", body: JSON.stringify(body) });
       applyState(st, false);
-      log("fleet overrides applied · 星座参数已写入运行态", "ok");
+      log("fleet overrides applied · 星座参数已写入", "ok");
     } catch (e) { log(e.message, "err"); }
   };
   $("btn-apply-sat").onclick = async () => {
@@ -339,7 +563,7 @@
     try {
       const st = await api("/control/sat/" + encodeURIComponent(pick) + "/reset", { method: "POST" });
       applyState(st, true);
-      log("sat " + pick + " reset to baseline · 已复位", "ok");
+      log("sat " + pick + " reset · 已复位", "ok");
     } catch (e) { log(e.message, "err"); }
   };
   $("btn-step").onclick = async () => {
@@ -354,7 +578,7 @@
     try {
       await api("/sim/step", { method: "POST", body: JSON.stringify({ n }) });
       await refresh(false);
-      log("ran " + n + " steps · 已推进", "ok");
+      log("ran " + n + " steps", "ok");
     } catch (e) { log(e.message, "err"); }
   };
   $("btn-reload").onclick = async () => {
@@ -362,7 +586,7 @@
       await api("/config/reload", { method: "POST" });
       pick = "";
       await refresh(true);
-      log("YAML reloaded · 配置已重载，覆盖清空", "ok");
+      log("YAML reloaded · 配置已重载", "ok");
     } catch (e) { log(e.message, "err"); }
   };
   $("btn-kpi").onclick = async () => {
@@ -372,8 +596,26 @@
     } catch (e) { log(e.message, "err"); }
   };
 
-  refresh(true).then(() => log("control UI connected · 控制台已连接", "ok"))
-    .catch((e) => log(e.message, "err"));
+  async function boot() {
+    const src = await (window.__cesiumReady || Promise.resolve("sync"));
+    if (typeof Cesium === "undefined") {
+      log("Cesium failed to load (" + src + ")", "err");
+      return;
+    }
+    initCesium();
+    try {
+      const g = await api("/system/gpu");
+      const tag = g.cuda ? ("GPU " + (g.name || "CUDA")) : ("orbit " + (g.device || "cpu"));
+      const el = document.createElement("div");
+      el.className = "pill";
+      el.innerHTML = "accel: <b>" + tag + "</b>";
+      $("status").appendChild(el);
+      log("orbit backend · " + JSON.stringify(g), "ok");
+    } catch (e) { log("gpu status: " + e.message, "err"); }
+    await refresh(true);
+    log("control UI connected · WebView2/GPU 控制台已连接", "ok");
+  }
+  boot().catch((e) => log(e.message, "err"));
 })();
 </script>
 </body>

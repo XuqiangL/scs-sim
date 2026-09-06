@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scs-sim"
-version = "0.8.1"
+version = "0.9.0"
 description = "Industrial-grade Starlink-like compute constellation simulator (catalog + 10k bench)"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "SCS-Sim contributors" }]
 keywords = ["constellation", "walker", "sgp4", "leo", "orbit", "starlink"]
@@ -31,6 +31,7 @@ scs-viz = "scs_sim.demo_viz:main"
 scs-api = "scs_sim.api.__main__:main"
 scs-catalog = "scs_sim.catalog.__main__:main"
 scs-bench = "scs_sim.bench:main"
+scs-sim-exe = "scs_sim.desktop.exe_entry:main"
 
 [project.urls]
 Documentation = "docs/ARCHITECTURE.md"
@@ -39,7 +40,7 @@ Documentation = "docs/ARCHITECTURE.md"
 include = ["scs_sim*"]
 
 [tool.setuptools.package-data]
-scs_sim = ["viz/*.html"]
+scs_sim = ["viz/*.html", "viz/globe3d/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
