@@ -110,6 +110,32 @@ def subsample_first_shell(elements: KeplerianBatch, max_sats: int) -> KeplerianB
     return elements.take(idx)
 
 
+def subsample_spread_planes(elements: KeplerianBatch, max_sats: int) -> KeplerianBatch:
+    """Take whole planes spaced around the first shell (coverage + intra-plane rings)."""
+    n = len(elements)
+    if max_sats <= 0:
+        raise ValueError("max_sats must be positive")
+    if n <= max_sats:
+        return elements
+    first = str(elements.shell_id[0])
+    idx_first = np.where(elements.shell_id == first)[0]
+    planes = elements.plane[idx_first]
+    unique = np.unique(planes)
+    n_slots = int(elements.n_slots[idx_first[0]]) if elements.n_slots is not None else 1
+    n_take = max(1, min(len(unique), max_sats // max(n_slots, 1)))
+    pick = np.linspace(0, len(unique) - 1, n_take, dtype=int)
+    chosen = set(int(p) for p in unique[pick])
+    keep: list[int] = []
+    for i in idx_first:
+        if int(elements.plane[i]) in chosen:
+            keep.append(int(i))
+    keep_arr = np.array(keep, dtype=int)[:max_sats]
+    if keep_arr.size < max_sats:
+        rest = np.setdiff1d(np.arange(n), keep_arr, assume_unique=False)
+        keep_arr = np.concatenate([keep_arr, rest[: max_sats - keep_arr.size]])
+    return elements.take(keep_arr)
+
+
 def generate_constellation(
     cfg: SimConfig,
     *,
@@ -128,6 +154,8 @@ def generate_constellation(
     if limit is not None:
         if mode == "first_shell":
             elements = subsample_first_shell(elements, limit)
+        elif mode == "spread_planes":
+            elements = subsample_spread_planes(elements, limit)
         else:
             elements = subsample_even(elements, limit)
     return elements

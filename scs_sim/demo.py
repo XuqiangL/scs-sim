@@ -166,7 +166,7 @@ def run_demo(
     _write_ephemeris(out_path, header, rows)
 
     topo_path = Path(cfg.demo.topology_output)
-    edge_csv = topo_path.with_name(topo_path.stem.replace("topology", "topology_edges") + ".csv")
+    edge_csv = topo_path.with_name("topology_edges.csv")
     if snapshots:
         write_topology_json(
             topo_path,

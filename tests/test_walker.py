@@ -38,3 +38,4 @@ def test_walker_10k_config_count() -> None:
     assert len(full) == 10_008
     demo = generate_constellation(cfg)  # uses demo.max_sats = 100
     assert len(demo) == 100
+    assert len(set(int(p) for p in demo.plane)) >= 4

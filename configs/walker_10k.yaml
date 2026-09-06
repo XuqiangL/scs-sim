@@ -19,8 +19,8 @@ earth:
 demo:
   steps: 12
   dt_seconds: 60
-  # first_shell keeps +Grid rings intact (first 100 of shell sl_550_53).
-  subsample: first_shell
+  # Spread 4 planes around the first shell so GS see sats; intra-plane +Grid stays.
+  subsample: spread_planes
   max_sats: 100
   output: out/ephemeris_demo.csv
   network: true

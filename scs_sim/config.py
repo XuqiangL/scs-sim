@@ -137,8 +137,8 @@ class SimConfig:
             raise ValueError(f"unknown ISL pattern {self.isl.pattern!r}")
         if self.isl.max_range_km <= 0:
             raise ValueError("isl.max_range_km must be positive")
-        if self.demo.subsample not in {"first_shell", "stride"}:
-            raise ValueError("demo.subsample must be first_shell or stride")
+        if self.demo.subsample not in {"first_shell", "stride", "spread_planes"}:
+            raise ValueError("demo.subsample must be first_shell, stride, or spread_planes")
 
 
 def _parse_epoch(value: str | datetime) -> datetime:

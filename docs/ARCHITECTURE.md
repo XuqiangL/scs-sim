@@ -102,7 +102,7 @@ Quota stop ≈ 10% of Cursor/Grok Bot usage — not a product-phase freeze
 ## Runtime data flow (Phase 1–3)
 
 1. Load YAML (`walker_10k.yaml` or `phase2_network.yaml`).
-2. Expand Walker shells; subsample (`first_shell` keeps +Grid rings).
+2. Expand Walker shells; subsample (`spread_planes` on the 10k demo keeps intra-plane +Grid and global GS coverage; `first_shell` / `stride` also supported).
 3. Tick `SimClock`; propagate Kepler+J2 (drag off by default).
 4. Write ECI/ECEF (+ optional eclipse / density) to `out/ephemeris_demo.csv`.
 5. On topology steps: +Grid ISL (LOS + max range) + GSL elevation attach.
