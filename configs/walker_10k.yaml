@@ -1,0 +1,85 @@
+# Starlink-like multi-shell Walker-delta constellation targeting ~10000 sats.
+# Phase 1: geometry + propagation only. ISL / compute / environment are later phases.
+#
+# Notation per shell: i : T/P/F  (inclination : total / planes / phasing)
+# Total T = 10008. Demo may subsample via demo.max_sats.
+
+name: walker_10k
+description: >
+  Multi-shell LEO compute constellation inspired by published Starlink-like
+  Walker-delta shells (mid-inclination dense planes + polar). Configured for
+  10008 satellites; set demo.max_sats to run a faster subset.
+
+epoch: "2026-09-06T00:00:00Z"
+propagator: kepler_j2   # kepler_j2 | sgp4
+
+earth:
+  model: wgs84
+
+demo:
+  steps: 12
+  dt_seconds: 60
+  # Subsample for interactive demo speed. Omit or set 10008 to fly the full shell.
+  max_sats: 100
+  output: out/ephemeris_demo.csv
+
+shells:
+  # Classic Starlink Gen1-density mid-inclination shells (72 x 22 = 1584)
+  - id: sl_550_53
+    altitude_km: 550.0
+    inclination_deg: 53.0
+    n_planes: 72
+    n_sats_per_plane: 22
+    phasing_f: 17
+  - id: sl_540_532
+    altitude_km: 540.0
+    inclination_deg: 53.2
+    n_planes: 72
+    n_sats_per_plane: 22
+    phasing_f: 17
+  - id: sl_530_43
+    altitude_km: 530.0
+    inclination_deg: 43.0
+    n_planes: 72
+    n_sats_per_plane: 22
+    phasing_f: 17
+  - id: sl_520_43
+    altitude_km: 520.0
+    inclination_deg: 43.0
+    n_planes: 72
+    n_sats_per_plane: 22
+    phasing_f: 17
+  - id: sl_510_53
+    altitude_km: 510.0
+    inclination_deg: 53.0
+    n_planes: 72
+    n_sats_per_plane: 22
+    phasing_f: 17
+  # Higher-inclination shells (36 x 20 = 720)
+  - id: sl_570_70
+    altitude_km: 570.0
+    inclination_deg: 70.0
+    n_planes: 36
+    n_sats_per_plane: 20
+    phasing_f: 11
+  - id: sl_560_70
+    altitude_km: 560.0
+    inclination_deg: 70.0
+    n_planes: 36
+    n_sats_per_plane: 20
+    phasing_f: 11
+  # Extra mid-inclination filler (36 x 14 = 504)
+  - id: sl_580_53
+    altitude_km: 580.0
+    inclination_deg: 53.0
+    n_planes: 36
+    n_sats_per_plane: 14
+    phasing_f: 11
+  # Near-polar / SSO-like (12 x 12 = 144)
+  - id: sl_560_sso
+    altitude_km: 560.0
+    inclination_deg: 97.6
+    n_planes: 12
+    n_sats_per_plane: 12
+    phasing_f: 7
+# Sum: 1584*5 + 720*2 + 504 + 144 = 10008
