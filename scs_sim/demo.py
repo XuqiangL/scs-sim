@@ -383,12 +383,13 @@ def run_demo(
         print(f"  wrote        : {cmp_path.resolve()}")
     else:
         print("  compute      : skipped")
-    print("  Phase 5–6    : Cesium / ops packaging — not built")
+    print("  Phase 5      : python -m scs_sim.demo_ops  (deployment / lifecycle)")
+    print("  Phase 6      : Cesium / MSI / Orekit — not built")
     return out_path
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="SCS-Sim Phase 1–4 Walker + compute demo")
+    parser = argparse.ArgumentParser(description="SCS-Sim Phase 1–5 Walker + compute + ops demo")
     parser.add_argument(
         "--config",
         type=Path,
@@ -400,7 +401,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, default=None, help="CSV output path")
     parser.add_argument("--no-network", action="store_true", help="Skip ISL/GSL topology")
     parser.add_argument("--no-compute", action="store_true", help="Skip job scheduler")
+    parser.add_argument(
+        "--ops",
+        action="store_true",
+        help="Run Phase 5 deployment/ops demo (default config: phase5_ops.yaml)",
+    )
     args = parser.parse_args(argv)
+
+    if args.ops:
+        from scs_sim.demo_ops import run_ops_demo
+
+        here = Path("configs") / "phase5_ops.yaml"
+        cfg_path = args.config if args.config is not None else (here if here.is_file() else default_config_path())
+        run_ops_demo(cfg_path, steps=args.steps)
+        return 0
 
     cfg_path = args.config if args.config is not None else default_config_path()
     run_demo(

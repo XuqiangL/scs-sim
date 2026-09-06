@@ -4,6 +4,6 @@ Phase: 1 (core)
 Completion: 90%
 """
 
-from scs_sim.constellation.walker import generate_constellation, generate_walker_shell
+from scs_sim.constellation.walker import concat_batches, generate_constellation, generate_walker_shell
 
-__all__ = ["generate_constellation", "generate_walker_shell"]
+__all__ = ["concat_batches", "generate_constellation", "generate_walker_shell"]

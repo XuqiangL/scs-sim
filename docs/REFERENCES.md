@@ -20,7 +20,7 @@ scheduler are clean-room stubs inspired by **orbital-compute** — not a copy.
 | **poliastro** | Python astrodynamics (Astropy). Reference for Kepler/J2 formulas; project is in maintenance. | MIT | https://github.com/poliastro/poliastro |
 | **humeris** | Python constellation / conjunction / analysis toolkit. Design reference for catalog ops. | check PyPI | https://pypi.org/project/humeris/ |
 | **python-sgp4** | Brandon Rhodes SGP4 — **used in Phase 1** as an optional propagator. | MIT | https://github.com/brandon-rhodes/python-sgp4 |
-| **CelesTrak** | TLE / OMM catalogs for real Starlink ephemerides (Phase 2+ ingestion, not Phase 1). | data TOS | https://celestrak.org/ |
+| **CelesTrak** | TLE / OMM catalogs. Phase 5 optional ingest via `deployment.tle_path` (`scs_sim.ops.tle`). | data TOS | https://celestrak.org/ |
 
 ## Standards / texts (formulas)
 

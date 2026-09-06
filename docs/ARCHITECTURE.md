@@ -2,9 +2,9 @@
 
 **Product:** industrial-grade Starlink-like **compute** constellation simulator  
 **Horizon:** fly ~10 000 satellites for orbital insertion, deployment, and operations  
-**Out of scope still:** Cesium UI, ops deployment automation, Windows MSI, Orekit adapter.
+**Out of scope still:** full Cesium app, Windows MSI, Orekit, production K8s.
 
-**Claimed product progress: 50%** (Phases 1–2 done, Phase 3 done, Phase 4 core scheduler).
+**Claimed product progress: 62%** (Phases 1–4 + Phase 5 ops/insertion core).
 
 ---
 
@@ -41,9 +41,17 @@ flowchart TB
         SCH["greedy + eclipse look-ahead"]
     end
 
-    subgraph P56["Phases 5–6 — NOT STARTED"]
+    subgraph P5["Phase 5 — GREEN — core"]
+        WAV["launch waves + altitude ramp"]
+        LIF["lifecycle states"]
+        ACT["replenish / retire / SK / conjunction"]
+        TLE["CelesTrak TLE hook"]
+        TIM["ops timeline JSON/CSV/HTML"]
+    end
+
+    subgraph P6["Phase 6 — NOT STARTED"]
         UI["Cesium UI"]
-        OPS["Windows ops / MSI"]
+        MSI["Windows MSI / K8s"]
     end
 
     CFG --> WAL --> ORB --> FRM
@@ -59,8 +67,12 @@ flowchart TB
     TOP --> SCH
     NOD --> SCH
     JOB --> SCH
-    SCH -.-> UI
-    SCH -.-> OPS
+    SCH --> WAV
+    WAV --> LIF --> ACT
+    TLE --> LIF
+    ACT --> TIM
+    LIF -.-> UI
+    TIM -.-> MSI
 ```
 
 Hexagonal-ish rule: ports stay in each package. Phase 4 scheduler reads power / eclipse / topology without owning them.
@@ -71,7 +83,7 @@ Hexagonal-ish rule: ports stay in each package. Phase 4 scheduler reads power / 
 
 | Module | Phase | Status | Completion | Notes |
 |--------|------:|--------|-----------:|-------|
-| `scs_sim/config.py` | 1–4 | **green** | 95% | constellation + ISL/GSL + power/thermal + jobs |
+| `scs_sim/config.py` | 1–5 | **green** | 95% | + deployment waves / TLE path |
 | `scs_sim/clock.py` | 1 | **green** | 90% | fixed-step UTC clock |
 | `scs_sim/orbit/` | 1+3 | **green** | 90% | Kepler+J2; SGP4; optional drag hook |
 | `scs_sim/constellation/` | 1 | **green** | 95% | Walker-delta; subsample modes |
@@ -82,18 +94,20 @@ Hexagonal-ish rule: ports stay in each package. Phase 4 scheduler reads power / 
 | `scs_sim/environment/` radiation | 3 | **green** | 80% | SAA heuristic + dose |
 | `scs_sim/compute/` | 4 | **green** | 90% | node, jobs, greedy look-ahead |
 | `scs_sim/demo.py` | 1–4 | **green** | 90% | ephemeris + env + schedule CSVs |
-| `configs/phase4_compute.yaml` | 4 | **green** | 100% | 48-sat Walker + 10 jobs |
-| Cesium UI | 5 | **not started** | 0% | — |
+| `scs_sim/ops/` | 5 | **green** | 90% | waves, lifecycle, TLE, timeline |
+| `scs_sim/demo_ops.py` | 5 | **green** | 90% | insertion / ops demo |
+| `configs/phase5_ops.yaml` | 5 | **green** | 100% | 3 waves, ~104 sats |
+| Cesium UI | 6 | **not started** | 0% | static HTML timeline only |
 | Ops packaging | 6 | **not started** | 0% | run scripts only |
 
 ### Progress bar (product)
 
 ```
-████████████████████░░░░░░░░░░░░░░░░░░░░░░░░  50%
-Phase 1–3 done · Phase 4 core · no Cesium / ops
+█████████████████████████░░░░░░░░░░░░░░░░░░░  62%
+Phase 1–4 done · Phase 5 ops core · no Cesium / MSI
 ```
 
-**Claimed product progress: 50%.**
+**Claimed product progress: 62%.**
 
 ---
 
@@ -131,6 +145,31 @@ Inspired by orbital-compute (clean-room). Not a full PHOENIX / multi-resource pa
 
 ---
 
+## Phase 5 — insertion and operations
+
+| Piece | Behavior |
+|-------|----------|
+| Waves | `deployment.waves[]`: launch epoch, parking→operational altitude ramp, commission hold |
+| States | `planned → ascending → commissioning → operational → decommissioning → retired` |
+| Topology | **only `operational`** sats enter the ISL graph |
+| Actions | replenish (add parking sats), retire, station-keeping mean-anomaly nudge, conjunction subsample |
+| Artifacts | `out/ops_timeline.json`, `out/ops_events.csv`, `out/ops_timeline.html` (static, not Cesium) |
+
+### TLE alignment hook
+
+Set `deployment.tle_path` to a CelesTrak 2-line / 3-line TLE file. `scs_sim.ops.tle` parses blocks and maps mean motion → semi-major axis into `KeplerianBatch`. Those sats attach as **operational** catalog vehicles.
+
+To fly **real Starlink** later:
+
+1. Download `https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=tle`
+2. Point `tle_path` at the file (or a subset).
+3. Optionally set `propagator: sgp4` so TEME positions come from python-sgp4 instead of Kepler+J2.
+4. Waves can still insert **new** synthetic sats beside the catalog.
+
+No network fetch is performed by the sim.
+
+---
+
 ## Scalability
 
-Demo subsample (48–120 sats) for topology + scheduler. Full 10k generation still works; do not run O(N²) fill at N=10008 in the default scripts.
+Demo subsample (48–120 sats) for topology + scheduler. Phase 5 default is ~104 wave sats. Full 10k generation still works via `walker_10k.yaml`; do not run O(N²) fill at N=10008 in the default scripts.

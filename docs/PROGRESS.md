@@ -1,6 +1,29 @@
 # Progress log
 
-Claimed product completion at end of this log: **~50%** (Phases 1–3 done + Phase 4 core).
+Claimed product completion at end of this log: **~62%** (Phases 1–4 + Phase 5 ops core).
+
+## 2026-09-06 — Phase 5 insertion + constellation operations (~62%)
+
+Continued on `main`. Shipped deployment waves, lifecycle, ops actions, TLE hook, timeline exports.
+
+- YAML `deployment.waves[]` with parking→operational altitude ramp and commission hold.
+- States: planned / ascending / commissioning / operational / decommissioning / retired.
+- Replenish, retire, station-keeping (mean-anomaly nudge), conjunction subsample warnings.
+- `out/ops_timeline.json`, `out/ops_events.csv`, static `out/ops_timeline.html`.
+- CelesTrak-style TLE parser + fixture; optional `deployment.tle_path`.
+- `configs/phase5_ops.yaml` (3 waves, 104 sats + 8 replenish); `python -m scs_sim.demo_ops`.
+- Windows `scripts/run_phase5.bat` / `.ps1`.
+- Tests: wave state machine, retired excluded from ISL, TLE fixture loads.
+
+**Still not built:** Cesium globe, MSI, Orekit, K8s.
+
+```
+Phase 1–3 ██████████  done
+Phase 4   ████████░░  core scheduler
+Phase 5   ████████░░  ops / insertion core
+Phase 6   ░░░░░░░░░░  Cesium / MSI
+Product   █████████████████████████  62%
+```
 
 ## 2026-09-06 — Phase 3 finish + Phase 4 onboard compute (~50%)
 

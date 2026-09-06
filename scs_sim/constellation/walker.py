@@ -65,7 +65,7 @@ def generate_walker_shell(
     )
 
 
-def _concat(batches: list[KeplerianBatch], epoch: datetime) -> KeplerianBatch:
+def concat_batches(batches: list[KeplerianBatch], epoch: datetime) -> KeplerianBatch:
     return KeplerianBatch(
         sat_id=np.concatenate([b.sat_id for b in batches]),
         shell_id=np.concatenate([b.shell_id for b in batches]),
@@ -148,7 +148,7 @@ def generate_constellation(
     for shell in cfg.shells:
         batches.append(generate_walker_shell(shell, cfg.epoch, sat_id_offset=offset))
         offset += shell.n_sats
-    elements = _concat(batches, cfg.epoch)
+    elements = concat_batches(batches, cfg.epoch)
     limit = cfg.demo.max_sats if max_sats is None else max_sats
     mode = cfg.demo.subsample if subsample is None else subsample
     if limit is not None:

@@ -1,0 +1,103 @@
+# Phase 5 orbital insertion + constellation operations.
+# Three waves, ~104 sats. Hourly steps compress multi-day ramps into a short demo.
+# Full 10k generation remains available via configs/walker_10k.yaml.
+
+name: phase5_ops
+description: >
+  Launch waves from parking (~350 km) to a 550 km / 53° operational shell,
+  commission, then replenish and retire. Optional CelesTrak TLE overlay.
+
+epoch: "2026-09-06T00:00:00Z"
+propagator: kepler_j2
+
+earth:
+  model: wgs84
+
+demo:
+  steps: 36
+  dt_seconds: 3600
+  max_sats: 200
+  subsample: first_shell
+  output: out/ephemeris_demo.csv
+  network: true
+  topology_steps: 6
+  ops_timeline: out/ops_timeline.json
+  ops_events: out/ops_events.csv
+  ops_html: out/ops_timeline.html
+
+isl:
+  pattern: plus_grid
+  max_range_km: 5500
+  earth_occlusion: true
+  fill_geometric: true
+  max_degree: 4
+
+gsl:
+  min_elevation_deg: 20
+  max_attach: 2
+
+ground_stations:
+  - {id: london, lat_deg: 51.5074, lon_deg: -0.1278, alt_km: 0.05}
+  - {id: singapore, lat_deg: 1.3521, lon_deg: 103.8198, alt_km: 0.03}
+
+deployment:
+  tle_path: tests/fixtures/starlink_sample.tle
+  station_keeping: true
+  phase_nudge_deg: 0.02
+  conjunction: true
+  conjunction_threshold_km: 25.0
+  conjunction_sample: 32
+  decommission_hours: 1.0
+  waves:
+    - wave_id: wave-a
+      launch_epoch: "2026-09-06T00:00:00Z"
+      shell_id: ops_550_53
+      n_sats: 48
+      n_planes: 6
+      n_sats_per_plane: 8
+      phasing_f: 1
+      parking_altitude_km: 350.0
+      operational_altitude_km: 550.0
+      inclination_deg: 53.0
+      ramp_hours: 10
+      commission_hours: 3
+    - wave_id: wave-b
+      launch_epoch: "2026-09-06T12:00:00Z"
+      shell_id: ops_550_53
+      n_sats: 32
+      n_planes: 4
+      n_sats_per_plane: 8
+      phasing_f: 1
+      parking_altitude_km: 360.0
+      operational_altitude_km: 550.0
+      inclination_deg: 53.0
+      raan_offset_deg: 30.0
+      ramp_hours: 8
+      commission_hours: 2
+    - wave_id: wave-c
+      launch_epoch: "2026-09-07T00:00:00Z"
+      shell_id: ops_550_53
+      n_sats: 24
+      n_planes: 4
+      n_sats_per_plane: 6
+      phasing_f: 1
+      parking_altitude_km: 340.0
+      operational_altitude_km: 550.0
+      inclination_deg: 53.2
+      raan_offset_deg: 60.0
+      ramp_hours: 6
+      commission_hours: 2
+  replenish:
+    - {step: 20, n_sats: 8, shell_id: ops_550_53, ramp_hours: 2, commission_hours: 1}
+  retire:
+    - {step: 28, n_sats: 6, wave_id: wave-a}
+
+# Dummy shell so load_config validation (at least one shell) still holds
+# if someone runs the Phase 1 demo against this file.
+shells:
+  - id: ops_550_53
+    altitude_km: 550.0
+    inclination_deg: 53.0
+    n_planes: 6
+    n_sats_per_plane: 8
+    phasing_f: 1

@@ -1,6 +1,6 @@
-"""Load YAML constellation, network, environment, and compute configuration.
+"""Load YAML constellation, network, environment, compute, and ops configuration.
 
-Phase: 1–4
+Phase: 1–5
 Completion: 95%
 """
 
@@ -125,6 +125,73 @@ class DemoConfig:
     eclipse_columns: bool = True
     environment_output: str = "out/environment_demo.csv"
     compute_output: str = "out/compute_schedule.csv"
+    ops_timeline: str = "out/ops_timeline.json"
+    ops_events: str = "out/ops_events.csv"
+    ops_html: str = "out/ops_timeline.html"
+
+
+@dataclass(frozen=True)
+class WaveConfig:
+    wave_id: str
+    launch_epoch: datetime
+    n_sats: int
+    parking_altitude_km: float
+    operational_altitude_km: float
+    inclination_deg: float
+    shell_id: str = ""
+    n_planes: int | None = None
+    n_sats_per_plane: int | None = None
+    phasing_f: int = 1
+    ramp_days: float = 0.0
+    ramp_hours: float = 12.0
+    commission_days: float = 0.0
+    commission_hours: float = 4.0
+    raan_offset_deg: float = 0.0
+
+    @property
+    def ramp_seconds(self) -> float:
+        if self.ramp_days > 0:
+            return float(self.ramp_days) * 86400.0
+        return float(self.ramp_hours) * 3600.0
+
+    @property
+    def commission_seconds(self) -> float:
+        if self.commission_days > 0:
+            return float(self.commission_days) * 86400.0
+        return float(self.commission_hours) * 3600.0
+
+
+@dataclass(frozen=True)
+class ReplenishAction:
+    step: int
+    n_sats: int
+    shell_id: str = ""
+    parking_altitude_km: float = 350.0
+    operational_altitude_km: float = 550.0
+    inclination_deg: float = 53.0
+    ramp_hours: float = 2.0
+    commission_hours: float = 1.0
+
+
+@dataclass(frozen=True)
+class RetireAction:
+    step: int
+    n_sats: int
+    wave_id: str | None = None
+
+
+@dataclass(frozen=True)
+class DeploymentConfig:
+    waves: tuple[WaveConfig, ...] = ()
+    replenish: tuple[ReplenishAction, ...] = ()
+    retire: tuple[RetireAction, ...] = ()
+    tle_path: str | None = None
+    station_keeping: bool = True
+    phase_nudge_deg: float = 0.02
+    conjunction: bool = True
+    conjunction_threshold_km: float = 40.0
+    conjunction_sample: int = 40
+    decommission_hours: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -150,6 +217,7 @@ class SimConfig:
     thermal: ThermalConfig = field(default_factory=ThermalConfig)
     radiation: RadiationConfig = field(default_factory=RadiationConfig)
     compute: ComputeConfig = field(default_factory=ComputeConfig)
+    deployment: DeploymentConfig = field(default_factory=DeploymentConfig)
     description: str = ""
     path: Path | None = None
 
@@ -235,6 +303,9 @@ def load_config(path: str | Path) -> SimConfig:
         eclipse_columns=bool(demo_raw.get("eclipse_columns", True)),
         environment_output=str(demo_raw.get("environment_output", "out/environment_demo.csv")),
         compute_output=str(demo_raw.get("compute_output", "out/compute_schedule.csv")),
+        ops_timeline=str(demo_raw.get("ops_timeline", "out/ops_timeline.json")),
+        ops_events=str(demo_raw.get("ops_events", "out/ops_events.csv")),
+        ops_html=str(demo_raw.get("ops_html", "out/ops_timeline.html")),
     )
     earth_raw = raw.get("earth") or {}
     earth = EarthConfig(model=str(earth_raw.get("model", "wgs84")))
@@ -307,6 +378,61 @@ def load_config(path: str | Path) -> SimConfig:
         min_soc=float(cmp_raw.get("min_soc", 0.12)),
         jobs=jobs,
     )
+    dep_raw = raw.get("deployment") or {}
+    waves = tuple(
+        WaveConfig(
+            wave_id=str(w["wave_id"]),
+            launch_epoch=_parse_epoch(w.get("launch_epoch", raw.get("epoch", "2026-01-01T00:00:00Z"))),
+            n_sats=int(w["n_sats"]),
+            parking_altitude_km=float(w.get("parking_altitude_km", 350.0)),
+            operational_altitude_km=float(w.get("operational_altitude_km", 550.0)),
+            inclination_deg=float(w.get("inclination_deg", 53.0)),
+            shell_id=str(w.get("shell_id") or w["wave_id"]),
+            n_planes=None if w.get("n_planes") is None else int(w["n_planes"]),
+            n_sats_per_plane=None if w.get("n_sats_per_plane") is None else int(w["n_sats_per_plane"]),
+            phasing_f=int(w.get("phasing_f", 1)),
+            ramp_days=float(w.get("ramp_days", 0.0)),
+            ramp_hours=float(w.get("ramp_hours", 12.0)),
+            commission_days=float(w.get("commission_days", 0.0)),
+            commission_hours=float(w.get("commission_hours", 4.0)),
+            raan_offset_deg=float(w.get("raan_offset_deg", 0.0)),
+        )
+        for w in (dep_raw.get("waves") or [])
+    )
+    replenish = tuple(
+        ReplenishAction(
+            step=int(a["step"]),
+            n_sats=int(a["n_sats"]),
+            shell_id=str(a.get("shell_id") or ""),
+            parking_altitude_km=float(a.get("parking_altitude_km", 350.0)),
+            operational_altitude_km=float(a.get("operational_altitude_km", 550.0)),
+            inclination_deg=float(a.get("inclination_deg", 53.0)),
+            ramp_hours=float(a.get("ramp_hours", 2.0)),
+            commission_hours=float(a.get("commission_hours", 1.0)),
+        )
+        for a in (dep_raw.get("replenish") or [])
+    )
+    retire = tuple(
+        RetireAction(
+            step=int(a["step"]),
+            n_sats=int(a["n_sats"]),
+            wave_id=None if a.get("wave_id") in (None, "", "none") else str(a["wave_id"]),
+        )
+        for a in (dep_raw.get("retire") or [])
+    )
+    tle_path = dep_raw.get("tle_path")
+    deployment = DeploymentConfig(
+        waves=waves,
+        replenish=replenish,
+        retire=retire,
+        tle_path=None if tle_path in (None, "", "none") else str(tle_path),
+        station_keeping=bool(dep_raw.get("station_keeping", True)),
+        phase_nudge_deg=float(dep_raw.get("phase_nudge_deg", 0.02)),
+        conjunction=bool(dep_raw.get("conjunction", True)),
+        conjunction_threshold_km=float(dep_raw.get("conjunction_threshold_km", 40.0)),
+        conjunction_sample=int(dep_raw.get("conjunction_sample", 40)),
+        decommission_hours=float(dep_raw.get("decommission_hours", 1.0)),
+    )
 
     cfg = SimConfig(
         name=str(raw.get("name", cfg_path.stem)),
@@ -323,6 +449,7 @@ def load_config(path: str | Path) -> SimConfig:
         thermal=thermal,
         radiation=radiation,
         compute=compute,
+        deployment=deployment,
         description=str(raw.get("description", "")).strip(),
         path=cfg_path,
     )
