@@ -26,4 +26,31 @@ are explicit non-goals.
 | Hypatia ns-3 / paid Cesium ion | — | out of scope | **n/a** |
 | Live CelesTrak in CI | `catalog.fetch` default false | offline fixture | **pass** |
 
+## Campaign verification (2026-09-06)
+
+Full suite: **65 passed / 0 failed / 2 skipped / 67 total**. Report: [TEST_REPORT.md](TEST_REPORT.md), `out/test_report.json`.
+
+| Check | Verified |
+|-------|----------|
+| Kepler period vs 2π√(a³/μ) | **yes** (rel error 0, limit 1e-12) |
+| J2 RAAN Vallado sign + magnitude | **yes** (−4.49 deg/day at 550 km / 53°) |
+| Radius ≈ a over several periods | **yes** (rel ≤ 1e-4) |
+| ECI↔ECEF norm + orthonormal GMST | **yes** |
+| Eclipse umbra / sunlit | **yes** |
+| Atmosphere ρ(550) > ρ(800) > 0 | **yes** |
+| SoC sunlight↑ / eclipse↓ / clip [0,1] | **yes** |
+| Thermal short-run Kelvin band | **yes** |
+| ISL Earth occlusion (antipodes) | **yes** |
+| GSL nadir vs far-side | **yes** |
+| Walker T=P×S; F≥P error | **yes** |
+| SGP4 vs Kepler+J2 LEO radii | **yes** (loose short-arc) |
+| FastAPI OpenAPI + session + twin | **yes** |
+| Demos 2/4/5/6 + catalog + bench | **yes** |
+| SoC/power properties, retired∉ISL, bad YAML, clock | **yes** |
+| N=10008 bench (`pytest -m slow`) | **yes** |
+| Import-all smoke | **yes** |
+| Live CelesTrak / Orekit numeric / signed MSI | **not in campaign** (out of scope) |
+
+Windows: `scripts\run_acceptance.bat` then `scripts\run_all_demos.bat`.
+
 Claimed product: **~97%**. Remaining ~3%: live Orekit, signed installer, production API hardening.

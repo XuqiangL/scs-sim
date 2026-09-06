@@ -41,3 +41,6 @@ include = ["scs_sim*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+    "slow: 10k-scale or long-running campaign tests",
+]
