@@ -1,7 +1,11 @@
 # References — OSS inventory
 
-Phase 1 cites these projects as **design references**. SCS-Sim is a clean-room
+Phase 1–3 cite these projects as **design references**. SCS-Sim is a clean-room
 implementation (MIT). We do **not** vendor-copy large GPL codebases.
+
+Phase 2 (+Grid, GSL, stretch) is inspired by **Hypatia**, **StarPerf**, **LEOCraft**,
+and **LEOPath**. Phase 3 eclipse/atmosphere is a minimal stub, not Orekit-grade;
+**orbital-compute** informs later power/thermal/radiation coupling.
 
 | Project | Role vs SCS-Sim | License (upstream) | Link |
 |---------|-----------------|--------------------|------|

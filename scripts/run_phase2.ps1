@@ -10,6 +10,6 @@ if (Get-Command py -ErrorAction SilentlyContinue) {
 
 Write-Host "[scs-sim] installing editable package..."
 & $py @prefix -m pip install -e .
-Write-Host "[scs-sim] running Phase 1-3 demo..."
-& $py @prefix -m scs_sim.demo @args
+Write-Host "[scs-sim] running Phase 2 network demo..."
+& $py @prefix -m scs_sim.demo --config configs/phase2_network.yaml @args
 exit $LASTEXITCODE

@@ -1,7 +1,7 @@
 """Kepler + J2 secular propagator (vectorized, Windows-friendly).
 
-Phase: 1 (core)
-Completion: 90%
+Phase: 1 (core) + Phase 3 optional drag hook
+Completion: 92%
 
 Clean-room implementation of Vallado-style J2 secular rates. Not derived
 from Orekit, poliastro, or GPL constellation simulators.
@@ -43,9 +43,18 @@ def j2_secular_rates(
 
 
 class KeplerJ2Propagator:
-    """Closed-form two-body + J2 secular rates. Default Phase 1 engine."""
+    """Closed-form two-body + J2 secular rates. Default Phase 1 engine.
+
+    Optional Phase 3 drag: when ``apply_drag`` and an atmosphere are set,
+    semi-major axis is decayed with a first-order energy kick
+    ``da = 2 a² / μ · (a_drag · v) · dt``. Off by default.
+    """
 
     name = "kepler_j2"
+
+    def __init__(self, atmosphere: object | None = None, apply_drag: bool = False) -> None:
+        self.atmosphere = atmosphere
+        self.apply_drag = bool(apply_drag)
 
     def elements_at(self, elements: KeplerianBatch, elapsed_s: float) -> KeplerianBatch:
         raan_dot, argp_dot, m_dot = j2_secular_rates(elements.a_m, elements.e, elements.i_rad)
@@ -54,11 +63,23 @@ class KeplerJ2Propagator:
         out.raan_rad = np.mod(elements.raan_rad + raan_dot * dt, 2.0 * np.pi)
         out.argp_rad = np.mod(elements.argp_rad + argp_dot * dt, 2.0 * np.pi)
         out.m_rad = np.mod(elements.m_rad + m_dot * dt, 2.0 * np.pi)
+        if self.apply_drag and self.atmosphere is not None and dt != 0.0:
+            r, v = keplerian_to_eci_m(
+                out.a_m, out.e, out.i_rad, out.raan_rad, out.argp_rad, out.m_rad
+            )
+            a_drag = self.atmosphere.drag_acceleration_eci_m_s2(r, v, elements.epoch)
+            power = np.sum(a_drag * v, axis=1)
+            out.a_m = out.a_m + (2.0 * out.a_m**2 / MU_EARTH_M3_S2) * power * dt
         return out
 
-    def positions_eci_m(self, elements: KeplerianBatch, elapsed_s: float) -> np.ndarray:
+    def state_eci_m(
+        self, elements: KeplerianBatch, elapsed_s: float
+    ) -> tuple[np.ndarray, np.ndarray]:
         el = self.elements_at(elements, elapsed_s)
-        r, _v = keplerian_to_eci_m(el.a_m, el.e, el.i_rad, el.raan_rad, el.argp_rad, el.m_rad)
+        return keplerian_to_eci_m(el.a_m, el.e, el.i_rad, el.raan_rad, el.argp_rad, el.m_rad)
+
+    def positions_eci_m(self, elements: KeplerianBatch, elapsed_s: float) -> np.ndarray:
+        r, _v = self.state_eci_m(elements, elapsed_s)
         return r
 
     def positions_ecef_m(

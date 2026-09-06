@@ -1,5 +1,5 @@
 # Starlink-like multi-shell Walker-delta constellation targeting ~10000 sats.
-# Phase 1: geometry + propagation only. ISL / compute / environment are later phases.
+# Phase 1–3: orbits + +Grid/GSL topology + eclipse/atmosphere stubs.
 #
 # Notation per shell: i : T/P/F  (inclination : total / planes / phasing)
 # Total T = 10008. Demo may subsample via demo.max_sats.
@@ -19,9 +19,40 @@ earth:
 demo:
   steps: 12
   dt_seconds: 60
-  # Subsample for interactive demo speed. Omit or set 10008 to fly the full shell.
+  # first_shell keeps +Grid rings intact (first 100 of shell sl_550_53).
+  subsample: first_shell
   max_sats: 100
   output: out/ephemeris_demo.csv
+  network: true
+  topology_steps: 4
+  topology_output: out/topology_demo.json
+  eclipse_columns: true
+
+isl:
+  pattern: plus_grid
+  max_range_km: 2500
+  earth_occlusion: true
+  fill_geometric: true
+  max_degree: 4
+
+gsl:
+  min_elevation_deg: 25
+  max_attach: 2
+
+ground_stations:
+  - {id: seattle, lat_deg: 47.6062, lon_deg: -122.3321, alt_km: 0.10}
+  - {id: london, lat_deg: 51.5074, lon_deg: -0.1278, alt_km: 0.05}
+  - {id: tokyo, lat_deg: 35.6762, lon_deg: 139.6503, alt_km: 0.04}
+  - {id: singapore, lat_deg: 1.3521, lon_deg: 103.8198, alt_km: 0.03}
+  - {id: sao_paulo, lat_deg: -23.5558, lon_deg: -46.6396, alt_km: 0.76}
+  - {id: johannesburg, lat_deg: -26.2041, lon_deg: 28.0473, alt_km: 1.75}
+  - {id: sydney, lat_deg: -33.8688, lon_deg: 151.2093, alt_km: 0.06}
+  - {id: frankfurt, lat_deg: 50.1109, lon_deg: 8.6821, alt_km: 0.11}
+
+environment:
+  eclipse: true
+  atmosphere: exponential
+  apply_drag: false
 
 shells:
   # Classic Starlink Gen1-density mid-inclination shells (72 x 22 = 1584)

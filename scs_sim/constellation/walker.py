@@ -1,7 +1,7 @@
 """Walker-delta generator, vectorized toward 10k satellites.
 
-Phase: 1 (core)
-Completion: 90%
+Phase: 1 (core) + Phase 2 subsample modes
+Completion: 95%
 
 Clean-room Walker i:T/P/F placement (RAAN = 2π k/P,
 M = 2π F k/T + 2π j/S). Inspired by published Walker geometry, not
@@ -60,6 +60,8 @@ def generate_walker_shell(
         argp_rad=np.mod(argp, 2.0 * np.pi),
         m_rad=np.mod(mean_anom, 2.0 * np.pi),
         epoch=epoch,
+        n_planes=np.full(t, p, dtype=np.int32),
+        n_slots=np.full(t, s, dtype=np.int32),
     )
 
 
@@ -76,6 +78,8 @@ def _concat(batches: list[KeplerianBatch], epoch: datetime) -> KeplerianBatch:
         argp_rad=np.concatenate([b.argp_rad for b in batches]),
         m_rad=np.concatenate([b.m_rad for b in batches]),
         epoch=epoch,
+        n_planes=np.concatenate([b.n_planes for b in batches]),
+        n_slots=np.concatenate([b.n_slots for b in batches]),
     )
 
 
@@ -90,10 +94,27 @@ def subsample_even(elements: KeplerianBatch, max_sats: int) -> KeplerianBatch:
     return elements.take(idx)
 
 
+def subsample_first_shell(elements: KeplerianBatch, max_sats: int) -> KeplerianBatch:
+    """Keep the first ``max_sats`` of the first shell (preserves +Grid rings)."""
+    n = len(elements)
+    if max_sats <= 0:
+        raise ValueError("max_sats must be positive")
+    if n <= max_sats:
+        return elements
+    first = str(elements.shell_id[0])
+    in_first = np.where(elements.shell_id == first)[0]
+    if in_first.size >= max_sats:
+        return elements.take(in_first[:max_sats])
+    rest = np.where(elements.shell_id != first)[0]
+    idx = np.concatenate([in_first, rest[: max_sats - in_first.size]])
+    return elements.take(idx)
+
+
 def generate_constellation(
     cfg: SimConfig,
     *,
     max_sats: int | None = None,
+    subsample: str | None = None,
 ) -> KeplerianBatch:
     """Generate all configured shells, optionally subsampled for a demo."""
     batches: list[KeplerianBatch] = []
@@ -103,6 +124,10 @@ def generate_constellation(
         offset += shell.n_sats
     elements = _concat(batches, cfg.epoch)
     limit = cfg.demo.max_sats if max_sats is None else max_sats
+    mode = cfg.demo.subsample if subsample is None else subsample
     if limit is not None:
-        elements = subsample_even(elements, limit)
+        if mode == "first_shell":
+            elements = subsample_first_shell(elements, limit)
+        else:
+            elements = subsample_even(elements, limit)
     return elements

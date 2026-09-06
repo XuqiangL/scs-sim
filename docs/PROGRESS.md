@@ -1,6 +1,41 @@
 # Progress log
 
-Claimed product completion at end of this log: **~10%** (Phase 1 stop).
+Claimed product completion at end of this log: **~32%** (Phase 1 + Phase 2 + Phase 3 minimal).
+
+## 2026-09-06 — Phase 2 network + Phase 3 stubs→minimal physics (~32%)
+
+Continued on `main` after Phase 1. User approved more work through a ~10% Cursor/Grok Bot quota — **not** a Phase-1 freeze.
+
+**Phase 2 (working, not placeholders):**
+
+- +Grid ISL: intra-plane ±1, inter-plane ±1; Earth-sphere occlusion; `isl.max_range_km`.
+- Optional geometric fill to `max_degree` so first-shell / subsampled demos stay useful.
+- GSL: YAML ground stations (lat/lon/alt), elevation mask, nearest-visible attach.
+- Topology snapshots on `demo.topology_steps`; `out/topology_demo.json` + edges CSV.
+- Dijkstra GS↔GS path stretch and hop count (Floyd–Warshall in the same module).
+- Config: `configs/walker_10k.yaml` extended; new `configs/phase2_network.yaml` (12×10).
+- Tests: ISL count, GSL nadir visibility, connected routing path.
+- Demo still writes Phase 1 `out/ephemeris_demo.csv` (extra eclipse columns appended).
+- Windows `scripts/run_phase2.bat` / `.ps1`.
+
+**Phase 3 (minimal physics):**
+
+- Cylindrical umbra/penumbra from a low-precision Sun vector.
+- Exponential atmosphere + cannonball drag acceleration; propagator hook **off by default**.
+- Eclipse / sunlight / density columns on the ephemeris CSV.
+- Radiation port remains TODO (`NullRadiation`).
+
+**Still not built:** compute scheduler, power/thermal, Cesium UI, ops packaging, 10k topology at full N.
+
+```
+Phase 1 ██████████  done   orbits / Walker
+Phase 2 ██████████  done   ISL / GSL / routing
+Phase 3 ██████░░░░  ~70%   eclipse + exp. atm; radiation TODO
+Phase 4 ░░░░░░░░░░  0%     onboard compute
+Phase 5 ░░░░░░░░░░  0%     Cesium
+Phase 6 ░░░░░░░░░░  0%     ops / 10k ops workflows
+Product █████████████░░░░░  32%
+```
 
 ## 2026-09-06 — Phase 1 greenfield (~10%)
 
@@ -15,16 +50,3 @@ Shipped the first usable slice of SCS-Sim:
 - Docs: ARCHITECTURE (mermaid + progress table + 10% stop), REFERENCES, this log.
 - Windows `scripts/run_demo.bat` / `scripts/run_demo.ps1`.
 - MIT license, `.gitignore`.
-
-**Not done (intentionally):** ISL routing, power/thermal, compute scheduling, Cesium UI, ops deployment, jaxsgp4 runtime, Orekit adapter, packaging beyond run scripts.
-
-```
-Phase 1 ██████████  10%  STOP
-Phase 2 ░░░░░░░░░░   0%  ISL/GSL/routing
-Phase 3 ░░░░░░░░░░   0%  environment physics
-Phase 4 ░░░░░░░░░░   0%  onboard compute
-Phase 5 ░░░░░░░░░░   0%  Cesium
-Phase 6 ░░░░░░░░░░   0%  ops / 10k ops workflows
-```
-
-Next allowed increment (Phase 2, not this commit): +Grid ISL adjacency and GSL elevation — still no Cesium.

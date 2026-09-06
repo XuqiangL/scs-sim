@@ -1,0 +1,58 @@
+# Compact complete Walker for Phase 2 topology / routing (no subsample holes).
+# 12 planes × 10 sats = 120. Use this for a denser +Grid than walker_10k's prefix.
+
+name: phase2_network
+description: >
+  Single mid-inclination Walker-delta shell sized for ISL/GSL routing demos.
+  Intra-plane spacing is 36°, so isl.max_range_km is 5500 km.
+
+epoch: "2026-09-06T00:00:00Z"
+propagator: kepler_j2
+
+earth:
+  model: wgs84
+
+demo:
+  steps: 8
+  dt_seconds: 60
+  subsample: first_shell
+  max_sats: 120
+  output: out/ephemeris_demo.csv
+  network: true
+  topology_steps: 4
+  topology_output: out/topology_demo.json
+  eclipse_columns: true
+
+isl:
+  pattern: plus_grid
+  max_range_km: 5500
+  earth_occlusion: true
+  fill_geometric: true
+  max_degree: 4
+
+gsl:
+  min_elevation_deg: 25
+  max_attach: 2
+
+ground_stations:
+  - {id: seattle, lat_deg: 47.6062, lon_deg: -122.3321, alt_km: 0.10}
+  - {id: london, lat_deg: 51.5074, lon_deg: -0.1278, alt_km: 0.05}
+  - {id: tokyo, lat_deg: 35.6762, lon_deg: 139.6503, alt_km: 0.04}
+  - {id: singapore, lat_deg: 1.3521, lon_deg: 103.8198, alt_km: 0.03}
+  - {id: sao_paulo, lat_deg: -23.5558, lon_deg: -46.6396, alt_km: 0.76}
+  - {id: johannesburg, lat_deg: -26.2041, lon_deg: 28.0473, alt_km: 1.75}
+  - {id: sydney, lat_deg: -33.8688, lon_deg: 151.2093, alt_km: 0.06}
+  - {id: frankfurt, lat_deg: 50.1109, lon_deg: 8.6821, alt_km: 0.11}
+
+environment:
+  eclipse: true
+  atmosphere: exponential
+  apply_drag: false
+
+shells:
+  - id: net_550_53
+    altitude_km: 550.0
+    inclination_deg: 53.0
+    n_planes: 12
+    n_sats_per_plane: 10
+    phasing_f: 5

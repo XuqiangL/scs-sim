@@ -1,9 +1,10 @@
 """Trapped-particle / SAA radiation port.
 
-Phase: 3 (placeholder)
+Phase: 3 (still TODO)
 Completion: 5%
 
-TODO Phase 3: AP8/AE8 or IRENE flux, South Atlantic Anomaly map, SEU rates.
+TODO later Phase 3+/4: AP8/AE8 or IRENE flux, South Atlantic Anomaly map,
+SEU rates. Not implemented — NullRadiation only.
 """
 
 from __future__ import annotations

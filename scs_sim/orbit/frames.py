@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 import numpy as np
 
 from scs_sim.clock import ensure_utc
-from scs_sim.constants import J2000_JD, JD_UNIX_EPOCH, SECONDS_PER_DAY
+from scs_sim.constants import FLATTENING, J2000_JD, JD_UNIX_EPOCH, R_EARTH_M, SECONDS_PER_DAY
 
 
 def julian_date(dt: datetime) -> float:
@@ -135,6 +135,76 @@ def keplerian_to_eci_m(
     v[:, 1] = sin_raan * px + cos_raan * cos_i * py
     v[:, 2] = sin_i * py
     return r, v
+
+
+def geodetic_to_ecef_m(
+    lat_deg: float | np.ndarray,
+    lon_deg: float | np.ndarray,
+    alt_m: float | np.ndarray = 0.0,
+) -> np.ndarray:
+    """WGS-84 geodetic → ECEF metres. Returns (3,) or (N, 3)."""
+    lat = np.deg2rad(np.asarray(lat_deg, dtype=float))
+    lon = np.deg2rad(np.asarray(lon_deg, dtype=float))
+    alt = np.asarray(alt_m, dtype=float)
+    e2 = FLATTENING * (2.0 - FLATTENING)
+    sl, cl = np.sin(lat), np.cos(lat)
+    n_prime = R_EARTH_M / np.sqrt(1.0 - e2 * sl * sl)
+    x = (n_prime + alt) * cl * np.cos(lon)
+    y = (n_prime + alt) * cl * np.sin(lon)
+    z = (n_prime * (1.0 - e2) + alt) * sl
+    stacked = np.stack(np.broadcast_arrays(x, y, z), axis=-1)
+    if stacked.ndim == 1:
+        return stacked
+    if stacked.shape == (3,):
+        return stacked
+    return np.asarray(stacked, dtype=float)
+
+
+def ecef_to_geodetic(r_ecef_m: np.ndarray) -> tuple[float, float, float]:
+    """ECEF metres → (lat_deg, lon_deg, alt_m), WGS-84 Bowring iteration."""
+    x, y, z = (float(v) for v in np.asarray(r_ecef_m, dtype=float).reshape(3))
+    e2 = FLATTENING * (2.0 - FLATTENING)
+    lon = np.arctan2(y, x)
+    p = float(np.hypot(x, y))
+    lat = np.arctan2(z, p * (1.0 - e2))
+    for _ in range(10):
+        sl = np.sin(lat)
+        n_prime = R_EARTH_M / np.sqrt(1.0 - e2 * sl * sl)
+        lat = np.arctan2(z + e2 * n_prime * sl, p)
+    sl = np.sin(lat)
+    n_prime = R_EARTH_M / np.sqrt(1.0 - e2 * sl * sl)
+    alt = p / max(np.cos(lat), 1e-16) - n_prime
+    return float(np.rad2deg(lat)), float(np.rad2deg(lon)), float(alt)
+
+
+def elevation_deg(r_gs_ecef_m: np.ndarray, r_sat_ecef_m: np.ndarray) -> np.ndarray:
+    """Elevation of sat(s) above the local geodetic horizon at a ground station.
+
+    ``r_sat_ecef_m`` is (3,) or (N, 3). Uses the ellipsoidal surface normal at
+    the station (from ECEF→geodetic) rather than the geocentric radius.
+    """
+    gs = np.asarray(r_gs_ecef_m, dtype=float).reshape(3)
+    sat = np.asarray(r_sat_ecef_m, dtype=float).reshape(-1, 3)
+    lat_deg, lon_deg, _alt = ecef_to_geodetic(gs)
+    lat, lon = np.deg2rad(lat_deg), np.deg2rad(lon_deg)
+    up = np.array(
+        [np.cos(lat) * np.cos(lon), np.cos(lat) * np.sin(lon), np.sin(lat)],
+        dtype=float,
+    )
+    rho = sat - gs
+    norm = np.linalg.norm(rho, axis=1)
+    norm = np.maximum(norm, 1e-9)
+    sine = (rho @ up) / norm
+    return np.rad2deg(np.arcsin(np.clip(sine, -1.0, 1.0)))
+
+
+def haversine_m(lat1_deg: float, lon1_deg: float, lat2_deg: float, lon2_deg: float) -> float:
+    """Great-circle distance on the WGS-84 sphere (mean radius ≈ R_EARTH)."""
+    lat1, lon1, lat2, lon2 = np.deg2rad([lat1_deg, lon1_deg, lat2_deg, lon2_deg])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = np.sin(dlat / 2.0) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2.0) ** 2
+    return float(2.0 * R_EARTH_M * np.arcsin(np.sqrt(min(1.0, a))))
 
 
 def utc_now_dummy() -> datetime:

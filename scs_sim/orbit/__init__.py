@@ -5,7 +5,15 @@ Completion: 85%
 """
 
 from scs_sim.orbit.elements import KeplerianBatch
-from scs_sim.orbit.frames import ecef_to_eci, eci_to_ecef, julian_date, keplerian_to_eci_m
+from scs_sim.orbit.frames import (
+    ecef_to_eci,
+    ecef_to_geodetic,
+    eci_to_ecef,
+    elevation_deg,
+    geodetic_to_ecef_m,
+    julian_date,
+    keplerian_to_eci_m,
+)
 from scs_sim.orbit.kepler import KeplerJ2Propagator, orbital_period_s
 from scs_sim.orbit.ports import PropagatorPort
 from scs_sim.orbit.propagator import make_propagator
