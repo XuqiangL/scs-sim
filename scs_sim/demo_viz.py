@@ -275,7 +275,7 @@ def run_viz_demo(
     print(f"  wrote        : {kpi_json.resolve()}")
     print(f"  wrote        : {kpi_md.resolve()}")
     print("  Cesium       : no API key used. Drop constellation.czml into Ion / Sandcastle.")
-    print("  Phase 7      : Windows MSI / ops REST / Orekit — not built")
+    print("  next         : python -m scs_sim.api  |  python -m scs_sim.bench")
     return html_path
 
 

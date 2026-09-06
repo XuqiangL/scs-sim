@@ -134,7 +134,7 @@ def run_ops_demo(
     print(f"  wrote        : {csv_path.resolve()}")
     print(f"  wrote        : {html_path.resolve()}")
     print("  TLE hook     : set deployment.tle_path to a CelesTrak TLE file")
-    print("  Phase 6      : Cesium / MSI / Orekit — not built")
+    print("  catalog      : python -m scs_sim.catalog  (TLE align, opt-in fetch)")
     return json_path
 
 
